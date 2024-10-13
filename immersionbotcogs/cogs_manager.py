@@ -41,8 +41,6 @@ class BotManager(commands.Cog):
     @app_commands.checks.has_role("Moderator")
     async def reload_cog(self, interaction: discord.Interaction):
         channel = interaction.channel
-        # if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private:
-        #     return await interaction.response.send_message(content='You can only log in #immersion-log or DMs.',ephemeral=True)
 
         my_view = CogSelectView(timeout=1800)
         for cog_name in [extension for extension in self.bot.extensions]:
@@ -52,18 +50,6 @@ class BotManager(commands.Cog):
                                                 view=my_view,
                                                 ephemeral=True)
     
-    # @app_commands.command(name="check_jp_channels", description="Checks allowed channels for jp points.")
-    # @app_commands.checks.has_role("Moderator")
-    # async def check_jp_channels(self, interaction: discord.Interaction):
-    #     my_view = CogSelectView(timeout=1800)
-    #     for channel_id in ALLOWED_CHANNELS:
-    #         print(channel_id)
-    #         print(type(channel_id))
-    #         print(interaction.guild.get_channel(channel_id).name)
-    #         cog_button = ShowButton(self.bot, label=interaction.guild.get_channel(channel_id).name)
-    #         my_view.add_item(cog_button)
-    #     await interaction.response.send_message(view=my_view, ephemeral=True)
-        
     @app_commands.command(name="sync", description="Syncs slash commands to the guild.")
     @app_commands.checks.has_role("Moderator")
     async def sync(self, interaction: discord.Interaction):
@@ -161,32 +147,6 @@ class BotManager(commands.Cog):
         await interaction.response.send_message(f"Please select the command you want to be explained.",
                                                 view=my_view,
                                                 ephemeral=True)
-        
-    
-    # @app_commands.command(name='load', description='Loads cogs.')
-    # @app_commands.checks.has_any_role("Moderator")
-    # async def load(self, interaction: discord.Interaction, *, cog: str):
-    #     await interaction.response.defer()
-    #     try:
-    #         await self.bot.load_extension(cog)
-    #     except Exception as e:
-    #         await interaction.edit_original_response(content=f'**`ERROR:`** {type(e).__name__} - {e}')
-    #     else:
-    #         await interaction.edit_original_response(content='**`SUCCESS`**')
-    
-    # @app_commands.command(name='check_cogs', description='Checks the status on cogs.')
-    # @app_commands.checks.has_any_role("Moderator")
-    # async def check_cogs(self, interaction: discord.Interaction, *, cog_name: str):
-    #     try:
-    #         await self.bot.load_extension(f"cogs.{cog_name}")
-    #     except commands.ExtensionAlreadyLoaded:
-    #         await interaction.response.send_message(ephemeral=True, content="Cog is loaded")
-    #     except commands.ExtensionNotFound:
-    #         await interaction.response.send_message(ephemeral=True, content="Cog not found")
-    #     else:
-    #         await interaction.response.send_message(ephemeral=True, content="Cog is unloaded")
-    #         await self.bot.unload_extension(ephemeral=True, content=f"cogs.{cog_name}")
-
 
 class MyView(discord.ui.View):
     def __init__(self, *, timeout: float = 1800):
