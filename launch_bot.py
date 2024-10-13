@@ -50,14 +50,13 @@ class MyBot(commands.Bot):
         error_type, value, tb = sys.exc_info()
         traceback_string = '\n'.join(traceback.format_list(traceback.extract_tb(tb)))
         error_string = f"Error occurred in `{value}`\n```{str(value)}\n\n{traceback_string}```"
-        # await self.bot_owner_dm_channel.send(error_string)
 
     async def setup_hook(self) -> None:
         for filename in os.listdir("./immersionbotcogs"):
             if filename.endswith(".py"):
                 print(f"immersionbotcogs.{filename[:-3]}")
                 await self.load_extension(f"immersionbotcogs.{filename[:-3]}")
-        #await bot.tree.sync()
+        await bot.tree.sync()
         
     async def on_ready(self):
         application_info = await self.application_info()
@@ -69,7 +68,6 @@ class MyBot(commands.Bot):
         
         print(f"Logged in as\n\tName: {self.user.name}\n\tID: {self.user.id}")
         print(f"Running pycord version: {discord.__version__}")
-        print(f"Synced commands to guild with id {947813835715256390}.")
 
 bot = MyBot()
 bot.run("enter token here")
