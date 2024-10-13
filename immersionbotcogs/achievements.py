@@ -21,10 +21,6 @@ class Achievements(commands.Cog):
         bool, msg = helpers.check_maintenance()
         if bool:
             return await interaction.response.send_message(content=f'In maintenance: {msg.maintenance_msg}', ephemeral=True)
-        
-        # channel = interaction.channel
-        # if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private:
-        #     return await interaction.response.send_message(content='You can only log in #immersion-log or DMs.',ephemeral=True)
 
         await interaction.response.defer()
         multipliers_path = _MULTIPLIERS
