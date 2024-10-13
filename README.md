@@ -32,7 +32,7 @@ Before you can install and run the bot, make sure you have the following:
 First, clone the bot repository to your local machine.
 ```
 git clone https://github.com/themoeway/Immersionbot.git
-cd your-bot-repo
+cd Immersionbot
 ```
 ### 2. Create a Virtual Environment (Optional but Recommended)
 It is recommended to create a virtual environment to manage dependencies cleanly.
