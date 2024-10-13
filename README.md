@@ -45,7 +45,7 @@ Using the codes of anime/manga/vns is really useful since they become important 
 
 **Demonstration:**
 
-https://github.com/user-attachments/assets/1bc81dc9-79ca-4c42-94e4-9f88e9e48919
+https://github.com/user-attachments/assets/90d549db-0f86-4771-ba1e-ae8309670ab0
 
 --------------------------------------------------------------------------------------
 Log 2 hours of listening of listening to your oshi
@@ -60,7 +60,7 @@ Log 1hr and 30 min of readtime of articles
 
 ```/log media_type: Readtime amount: 1:30 name: articles```
 
-https://github.com/user-attachments/assets/8317a857-c21e-4e93-a17a-b175ecd117b6
+https://github.com/user-attachments/assets/fc968b94-ce22-461d-8a7a-74ced6a3d8b7
 
 ## Immersion Goals
 You can set yourself goals to hit when immersing, for example watching 10eps till the end of the day, reading 100k characters till the end of the week, watching 5 eps of Anime daily or listening 70hrs till a specific date you set.
@@ -93,7 +93,7 @@ will count towards it.
 
 **Demonstration:**
 
-https://github.com/user-attachments/assets/646398ed-5f47-42dd-aea4-0a14e96c92d6
+https://github.com/user-attachments/assets/ca22510e-9e6b-4833-83b8-87d31d35fd06
 
 ## Viewing logs
 You can view logs/leaderboards of the following timeframes:
@@ -109,6 +109,7 @@ Selects all the logs there are.
 Selects all the logs from today
 -** custom timeframe [year-month-day-year-month-day]**
 Selects all the logs from the specified timeframe.
+
 ### Usage
 
 Some commands, like ``/me``, ``/leaderboard`` ..., allow you to further narrow down the logs which are going to be selected by specifying a media type, such that only logs of a certain media type are considered or of a specifc name.
