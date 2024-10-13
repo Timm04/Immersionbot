@@ -13,7 +13,7 @@ Powerful features that it provides:
 - ⚙️ Built in log deletion in case you make a mistake with your logs.
 - 🙋‍♂️ Streak counts and achievements to motivate you to immerse more.
 
-![image](https://github.com/user-attachments/assets/4e6973ed-e13f-4222-967b-c3712b0af86f)![Discord_qAaMhCHKcP](https://github.com/user-attachments/assets/715751b8-de6b-447a-ad47-1c2a3249fa7b)![Discord_CugvmcF4Oj](https://github.com/user-attachments/assets/a25e72c0-4c9d-4537-9519-27246ac44758)![Discord_1slmR1tO1L](https://github.com/user-attachments/assets/d3155e29-49b1-4746-b117-8265eb31e639)
+![image](img/logging_anime.png)![Discord_qAaMhCHKcP](img/logging_listening_youtube.png)![Discord_CugvmcF4Oj](img/immersion_graph.png)![Discord_1slmR1tO1L](img/leaderboard.png)
 
 ## Usage Guide
 
