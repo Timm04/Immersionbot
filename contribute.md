@@ -26,3 +26,4 @@ The immersion bot uses [Python 3.9.0](https://www.python.org/downloads/release/p
 
 ##  Testing
 
+TBD by TMW admins.
