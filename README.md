@@ -3,7 +3,7 @@
 📢 **New contributors [welcome](contribute.md)!**
 
 ## What is the Immersion Bot?
-The Immersion bot helps you track and manage your language learning journey.
+The Immersion bot allows you to keep track of your immersion gains, visualize your immersion progress and allows creating immersion goals for you to hit.
 
 Powerful features that it provides:
 - 📝 Logging your learning progress with the ability to use APIs like Anilist and VNDB to get more details for your immersion.
@@ -14,6 +14,136 @@ Powerful features that it provides:
 - 🙋‍♂️ Streak counts and achievements to motivate you to immerse more.
 
 ![image](https://github.com/user-attachments/assets/4e6973ed-e13f-4222-967b-c3712b0af86f)![Discord_qAaMhCHKcP](https://github.com/user-attachments/assets/715751b8-de6b-447a-ad47-1c2a3249fa7b)![Discord_CugvmcF4Oj](https://github.com/user-attachments/assets/a25e72c0-4c9d-4537-9519-27246ac44758)![Discord_1slmR1tO1L](https://github.com/user-attachments/assets/d3155e29-49b1-4746-b117-8265eb31e639)
+
+## Usage Guide
+
+By typing '/' into any discord chat, you will open up the discord slash command menu which will show you all the bots the server has. Now by clicking on the Immersion Bot in that menu, you will be presented with all the commands you can use to track and manage your immersion!
+
+### More important Commands
+
+If you don't know what a command does, you can type /help and selecting the Immersion Bot.
+
+You can log immersion for the following mediums:
+- Visual Novels
+- Anime
+- Manga
+- Book
+- Readtime
+- Listening
+- Reading
+
+But you can also earn points by outputting in Japanese. By writing a message in Japanese you will also get points which will count towards your immersion.
+
+```/log [media_type] [amount] Optional(title) Optional(comment)```
+
+Log 10 episodes of the anime Fullmetal Alchemist Brotherhood with the comment "best show ever "
+
+```/log media_type:Anime amount:10 name:5114 comment:best show ever```
+
+Note: You can select the title of an anime in the dropdown menu whene you type in its Japanese name. Or you can type in its Anilist number as a shortcut which you will find in the url. Thats why the name parameter in the example above is a number. 
+Using the codes of anime/manga/vns is really useful since they become important when setting a goal with the bot. The demonstration video below makes this easier to understand so feel free to watch it.
+
+**Demonstration:**
+
+https://github.com/user-attachments/assets/1bc81dc9-79ca-4c42-94e4-9f88e9e48919
+
+--------------------------------------------------------------------------------------
+Log 2 hours of listening of listening to your oshi
+
+```/log media_type: Listening amount: 2:00 name: listening to oshi```
+
+Log 20 min of listening of youtube
+
+```/log media_type: Listening amount: 20 name: youtube```
+
+Log 1hr and 30 min of readtime of articles
+
+```/log media_type: Readtime amount: 1:30 name: articles```
+
+https://github.com/user-attachments/assets/8317a857-c21e-4e93-a17a-b175ecd117b6
+
+## Immersion Goals
+You can set yourself goals to hit when immersing, for example watching 10eps till the end of the day, reading 100k characters till the end of the week, watching 5 eps of Anime daily or listening 70hrs till a specific date you set.
+
+**``/goals``**: This command display your current goals.
+
+**``/set_goal_medium [media_type] [amount] [span] Optional(name)``**
+Set a goal of watching 30 eps of any anime till the end of today
+
+```/set_goal_medium media_type:anime amount:30 span:DAY```
+Set a goal of watching 26 eps of  watching Neon Genesis Evangelion till 20th May 2024
+
+```/set_goal_medium media_type:anime amount:26 span:20-05-2024 name:30```
+
+Note: Only logs where you explicitly log Neon Genesis Evangelion by having it selected from the dropdown menu or through the anilist code (such that the source link will pop up in the log message) will count towards that goal.
+Logging something like this now:
+
+```/log media_type:anime amount:1 name:Neon Genesis Evangelion```
+will not count towards the goal set above
+
+```/set_goal_medium media_type:anime amount:26 span:20-05-2024 name:30```
+meaning the name of the goal/log is case-sensitive, you have to be exact.
+But setting a goal like this, without select the title from the dropdown menu in name and without the anilist code but just typing it raw out in the name parameter
+
+```/set_goal_medium media_type:anime amount:26 span:20-05-2024 name:Neon Genesis Evangelion```
+and logging it like this 
+
+```/log media_type:anime amount:1 name:Neon Genesis Evangelion```
+will count towards it.
+
+**Demonstration:**
+
+https://github.com/user-attachments/assets/646398ed-5f47-42dd-aea4-0a14e96c92d6
+
+## Viewing logs
+You can view logs/leaderboards of the following timeframes:
+- **Month**
+Selects all the logs from the current month.
+- **Week**
+Selects all the logs from the current week.
+- **Year**
+ Selects all the logs from the current year.
+- **All time**
+Selects all the logs there are.
+- **Day**
+Selects all the logs from today
+-** custom timeframe [year-month-day-year-month-day]**
+Selects all the logs from the specified timeframe.
+### Usage
+
+Some commands, like ``/me``, ``/leaderboard`` ..., allow you to further narrow down the logs which are going to be selected by specifying a media type, such that only logs of a certain media type are considered or of a specifc name.
+
+You can view your logs with the following commands:
+
+```/me [timeframe (default=MONTH)] [media_type] [name]```
+
+Shows your immersion breakdown. 
+Example:
+- You can select a preset timeframe like MONTH, WEEK, ALL TIME etc. or a custom timeframe you can set like 2023-04-24-2024-05-01. 
+- You can narrow the logs further down by selecting a media type, so if you select ANIME then only your anime logs will show up.
+- You can also enter a name, so for example an anilist code like 20755 (for the anime Assassination Classroom) and it will only show those logs where you logged the anime Assassination Classroom.
+
+You can conbine the filters how you want, allowing you to view logs of any time. The same goes for the following commands.
+
+-----------------------------------------------------------------------------------
+```/user [user] [timeframe (default=MONTH)] [media_type] [name]```
+
+Different to the ``/me`` command, which shows you only your logs, the ``/user`` command shows you the logs of any user.
+
+----------------------------------------------------------------------------------
+```/leaderboard [timeframe (default=MONTH)] [media_type] [name]```
+
+Shows the leaderboard. You can narrow down the selected logs the same way as the previous commands. 
+
+----------------------------------------------------------------------------------
+```/logs [user] [timeframe (default=DAY)] [media_type] [name]```
+
+Shows the logs of a user. You can narrow down the selected logs the same way as the previous commands.
+
+----------------------------------------------------------------------------------
+```/export [timeframe (default=MONTH)] [media_type]```
+
+Exports your logs in a cvs file. You can narrow down the selected logs the same way as the previous commands.
 
 ## Installation
 
