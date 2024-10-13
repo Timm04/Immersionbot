@@ -131,23 +131,7 @@ class Log(commands.Cog):
             goals = store_goal.get_goals(interaction.user.id)
     
             goals_description = helpers.get_goal_description(goals, codes_path, codes)
-            # relevant_logs = store_prod.get_logs_by_user(interaction.user.id, None, (beginn, end), None)
-
-            # if not relevant_logs:
-            #     for goal_row in goals:
-            #         goals_description.append(f"""- 0/{goal_row.amount} {helpers.media_type_format(goal_row.media_type.value) if goal_row.goal_type != "POINTS" else "points"} {goal_row.text} ({goal_row.span}{"=" + str(goal_row.end) if goal_row.span == "DATE" else ""})""")
-            #     goals_description = '\n'.join(goals_description)
-
-            # time_relv_log = time.time()
-            # # dicts = helpers.get_time_relevant_logs(goals, relevant_logs)
-        
-            # end_time = time.time()
-            # print('get_time_relevant_logs: ' + str(end_time - time_relv_log) + ' seconds')
-
-            # e = time.time()
-            # goals_description, goal_message = helpers.get_goal_description(logs=relevant_logs, goals=goals, log_bool=True, store=store_goal, interaction=interaction, media_type=media_type)
-            # end_time = time.time()
-            # print('get_goal_desc: ' + str(end_time - e) + ' seconds')
+            
         else:
             goals_description = []
             goal_message = []
@@ -186,12 +170,6 @@ class Log(commands.Cog):
             await interaction.channel.send(content=">>> " + comment)
         if old_next_achievement != new_rank_achievement:
             await interaction.channel.send(content=f'{interaction.user.mention} congrats on unlocking the achievement {media_type.upper()} {new_rank_name} {new_emoji} {str(int(current_rank_achievement))} {helpers.media_type_format(media_type.upper())}!!! {emoji()}')
-#         await interaction.edit_original_response(view=None,content=f'''{interaction.user.mention} logged {round(amount,2)} {format} {title} {emoji}\n{msg}\ncurrent streak: **{store_prod.get_log_streak(interaction.user.id)[0].current_streak} days**\n\n{"""__Goal progression:__
-# """ + str(goals_description) + """
-# """ if goals_description else ""}{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}\n{("""
-# **Next Achievement: **""" + media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(new_rank_achievement-current_achievemnt_points) + " " + helpers.media_type_format(media_type.upper())) if new_next_rank_name != "Master" else "" if old_next_achievement == new_rank_achievement else """
-# **New Achievemnt Unlocked: **""" + media_type.upper() + " " + new_rank_name + " " + new_emoji + " " + str(int(current_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()) + """
-# **Next Achievement:** """ + media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper())}\n\n{">>> " + comment if comment else ""}''')
 
         if goal_message != [] and goals:
             await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {emoji()}')
