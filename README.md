@@ -53,10 +53,11 @@ pip install -r requirements.txt
   3. In the Bot section, create a new bot and copy its Token.
   4. Tick `Presence Intent`, `Server Members Intent` and `Message Content Intent`.
   5. Under OAuth2 > URL Generator, enable `bot` and `applications.commands` scopes. Assign administrator permissions and copy the link and add the bot to your server.
+  6. Paste the token at the bottom of the `launch_bot.py` file.
 ### 6. Run the Bot
 To start the bot, run the following command:
 ```
-python launch_log_bot.py
+python launch_bot.py
 ```
 ### 7. Verify the Bot is Working
 Once the bot is running, you can test its functionality by interacting with it on your Discord server.
