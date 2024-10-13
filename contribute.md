@@ -16,6 +16,10 @@ Below are a few guidelines to ensure contributions have a good level of quality 
 - Large pull requests without a clear scope will not be merged.
 - Incomplete or non-standalone features will not be merged.
 
+Create a role called "Moderator" on your discord server where you invited the bot to and assign it to yourself.
+To develop on the bot, start the bot then set change to the code. If you change something in the `immersionbotcogs` directory, then instead of restarting the bot, use the `/reload_cog` command, which restarts that one command block i.e cog/file.
+If you change a file outside of the `immersionbotcogs` direcotry, then you need to restart the bot so the changes take effect.
+
 ## Setup
 
 The immersion bot uses [Python 3.9.0](https://www.python.org/downloads/release/python-390/) and [pip 24.2](https://discuss.python.org/t/announcement-pip-24-2-release/59402) tools for building and testing.
