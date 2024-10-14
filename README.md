@@ -190,8 +190,9 @@ To start the bot, run the following command:
 ```
 python launch_bot.py
 ```
-### 7. Verify the Bot is Working
-Once the bot is running, you can test its functionality by interacting with it on your Discord server.
+### 7. Change the Constant Values.
+Change the `guild_id` to your discord server and change he `ALLOWED_CHANNELS` to the channel where users should log their immersion.
+By changing the `EMOJI_TABLE` in `modals/constants.py` you can change the emojis the bot is going to use for the log messages. 
 
 ## Contributing
 
