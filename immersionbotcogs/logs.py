@@ -107,9 +107,9 @@ class Logs_Display(commands.Cog):
 
         await interaction.response.defer()
         media_types = ["VN", "ANIME", "MANGA", "READING", "READTIME", "BOOK", "LISTENING", "None"]
-        store_prod = Store(_DB_NAME)
-    
-        logs = store_prod.get_logs_by_user(user.id, media_type, [beginn, end], title[0] if name else name)
+        with Store(_DB_NAME) as store_prod:
+            logs = store_prod.get_logs_by_user(user.id, media_type, [beginn, end], title[0] if name else name)
+            
         codes_path = _IMMERSION_CODES
         try:
             with open(codes_path, "r") as file:

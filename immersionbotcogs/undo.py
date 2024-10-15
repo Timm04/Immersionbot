@@ -171,12 +171,14 @@ class Undo(commands.Cog):
                 codes = {}
             log = Log(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].note, relevant_result[1].created_at)
             helpers.undo_goal(goals, log, store_goal, MULTIPLIERS)
+            store_goal.close()
             await interaction.response.edit_message(content='## **Deleted log.**')
 
         select.callback = my_callback
         view = MyView(data=results, beginning_index=beginning_index, end_index=end_index)
         
         view.add_item(select)
+        store.close()
         await interaction.response.send_message(embed=myembed, view=view, ephemeral=True)
 
         # store = Store(_DB_NAME)

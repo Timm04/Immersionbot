@@ -35,11 +35,11 @@ class Japanese_tracker(commands.Cog):
     async def on_message_delete(self, message):
         if message.channel.id not in ALLOWED_CHANNELS:
             return
-        store = Set_jp("japanese.db")
-        try:
-            store.delete_output(message.id)
-        except Exception:
-            return
+        with Set_jp("japanese.db") as store:
+            try:
+                store.delete_output(message.id)
+            except Exception:
+                return
 
     @app_commands.command(name='output_channels', description=f'Shows the output channels.')
     async def output_channels(self, interaction: discord.Interaction):
@@ -82,14 +82,14 @@ class Japanese_tracker(commands.Cog):
                 return
             
         
-            store = Set_jp(_JP_DB)
-            if store.find_similar(message.author.id, message.content) and japanese > 12:
-                print("dupe")
-                return
-            
-            print(message.content)
-            store.log_jp(message.author.id, message.channel.id, message.id, "OUTPUT", message.content, japanese, message.created_at)
-            await self.limitedQueue.add(message.content)
+            with Set_jp(_JP_DB) as store:
+                if store.find_similar(message.author.id, message.content) and japanese > 12:
+                    print("dupe")
+                    return
+                
+                print(message.content)
+                store.log_jp(message.author.id, message.channel.id, message.id, "OUTPUT", message.content, japanese, message.created_at)
+                await self.limitedQueue.add(message.content)
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -80,8 +80,8 @@ class Export(commands.Cog):
             except Exception:
                 return await interaction.response.send_message(content='Enter a valid date. [Year-Month-day] e.g 2023-12-24', ephemeral=True)
 
-        store = Store(_DB_NAME)
-        logs = store.get_logs_by_user(interaction.user.id, media_type, (beginn, end), None)
+        with Store(_DB_NAME) as store:
+            logs = store.get_logs_by_user(interaction.user.id, media_type, (beginn, end), None)
         if logs == []:
             return await interaction.edit_original_response(content='No logs were found.')
 

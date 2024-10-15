@@ -29,8 +29,8 @@ class Achievements(commands.Cog):
                 MULTIPLIERS = json.load(file)
         except FileNotFoundError:
             MULTIPLIERS = {}
-        store = Store(_DB_NAME)
-        points = store.get_logs_by_user(interaction.user.id, None, ("2000-01-01", interaction.created_at), None)
+        with Store(_DB_NAME) as store:
+            points = store.get_logs_by_user(interaction.user.id, None, ("2000-01-01", interaction.created_at), None)
         weighed_points_mediums = helpers.multiplied_points(points, MULTIPLIERS)
         abmt = helpers.calc_achievements(weighed_points_mediums)
         achievements = helpers.get_achievement_text(abmt)

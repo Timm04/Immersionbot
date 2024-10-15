@@ -197,10 +197,10 @@ class User(commands.Cog):
                 return await interaction.response.send_message(content='Enter a valid date. [Year-Month-day] e.g 2023-12-24', ephemeral=True)
 
 
-        store = Store(_DB_NAME)
-        logs = store.get_logs_by_user(user.id, media_type, (beginn, end), name)
-        store_jp = Set_jp(_JP_DB)
-        logs = logs + store_jp.get_jp(user.id, (beginn, end))
+        with Store(_DB_NAME) as store:
+            logs = store.get_logs_by_user(user.id, media_type, (beginn, end), name)
+        with Set_jp(_JP_DB) as store_jp:
+            logs = logs + store_jp.get_jp(user.id, (beginn, end))
         if logs == []:
             return await interaction.response.send_message(content='No logs were found. Try searching with a bigger timeframe.',ephemeral=True)
 
@@ -285,13 +285,13 @@ class User(commands.Cog):
             except Exception:
                 return await interaction.response.send_message(content='Enter a valid date. [Year-Month-day] e.g 2023-12-24', ephemeral=True)
     
-        store = Store(_DB_NAME)
-        store_jp = Set_jp(_JP_DB)
-        logs = store.get_logs_by_user(interaction.user.id, None, (beginn, end), name)
-        logs = logs + store_jp.get_jp(interaction.user.id, (beginn, end))
-        if logs == []:
-            return await interaction.response.send_message(content='No logs were found. Try searching with a bigger timeframe.',ephemeral=True)
-        
+        with Store(_DB_NAME) as store:
+            with Set_jp(_JP_DB) as store_jp:
+                logs = store.get_logs_by_user(interaction.user.id, None, (beginn, end), name)
+                logs = logs + store_jp.get_jp(interaction.user.id, (beginn, end))
+            if logs == []:
+                return await interaction.response.send_message(content='No logs were found. Try searching with a bigger timeframe.',ephemeral=True)
+            
         await interaction.response.defer()
         
         multipliers_path = _MULTIPLIERS

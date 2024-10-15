@@ -59,14 +59,14 @@ class BotManager(commands.Cog):
     @app_commands.command(name="maintenance", description="Disables command usage for debugging.")
     @app_commands.checks.has_role("Moderator")
     async def maintenance(self, interaction: discord.Interaction, message: str):
-        debug = Debug("dbs/debug.db")
-        bool, msg = helpers.check_maintenance()
-        if bool:
-            debug.end_maintenance()
-            return await interaction.response.send_message(content="Ended maintenance.", ephemeral=True)
-        else:
-            debug.start_maintenance(interaction.user.id, message)
-            return await interaction.response.send_message(content=f"Started maintenance with the following info: {message}.", ephemeral=True)
+        with Debug("dbs/debug.db") as debug:
+            bool, msg = helpers.check_maintenance()
+            if bool:
+                debug.end_maintenance()
+                return await interaction.response.send_message(content="Ended maintenance.", ephemeral=True)
+            else:
+                debug.start_maintenance(interaction.user.id, message)
+                return await interaction.response.send_message(content=f"Started maintenance with the following info: {message}.", ephemeral=True)
         
     @app_commands.command(name='load', description='Loads cogs.')
     @app_commands.checks.has_any_role("Moderator")
@@ -89,13 +89,13 @@ class BotManager(commands.Cog):
     @app_commands.checks.has_any_role("Moderator")
     async def output_dist(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        store = Set_jp(_JP_DB)
-        outputs = store.all_output()
-        dict = {}
-        for output in outputs:
-            channel_id, amount = output
-            channel_name = interaction.guild.get_channel(channel_id).name
-            dict[channel_name] = amount
+        with Set_jp(_JP_DB) as store:
+            outputs = store.all_output()
+            dict = {}
+            for output in outputs:
+                channel_id, amount = output
+                channel_name = interaction.guild.get_channel(channel_id).name
+                dict[channel_name] = amount
     
         await interaction.followup.send(content=dict, ephemeral=True)
                 

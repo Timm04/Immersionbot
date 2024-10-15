@@ -134,8 +134,9 @@ class Set_Goal_Media(commands.Cog):
                 codes = json.load(file)
         except FileNotFoundError:
             codes = {}
-        store_log = Store(_DB_NAME)
-        logs = store_log.get_logs_by_user(interaction.user.id, media_type, (created_at, end), None)
+        with Store(_DB_NAME) as store_log:
+            logs = store_log.get_logs_by_user(interaction.user.id, media_type, (created_at, end), None)
+        store.close()
         goal_msgs = []
         for log in logs:
             goal_msg = helpers.update_goals(interaction.user.id, [Goal(interaction.user.id, goal_type, MediaType[media_type.upper()], 0, amount.value, name, span, created_at, end)], Log_constructor(interaction.user.id, log.media_type.value, log.amount, log.title, log.note, log.created_at), store, media_type, MULTIPLIERS, codes, codes_path)
