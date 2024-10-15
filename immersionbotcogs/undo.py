@@ -124,8 +124,8 @@ class Undo(commands.Cog):
             except Exception:
                 return await interaction.response.send_message(content='Enter a valid date. [Year-Month-day] e.g 2023-12-24', ephemeral=True)
             
-        store = Store(_DB_NAME)
-        logs = store.get_logs_by_user_with_row_id(interaction.user.id, None, (beginn, end), None)
+        with Store(_DB_NAME) as store:
+            logs = store.get_logs_by_user_with_row_id(interaction.user.id, None, (beginn, end), None)
         if logs == []:
             return await interaction.response.send_message(content='No logs were found. Try searching with a bigger timeframe.',ephemeral=True)
         
@@ -154,9 +154,10 @@ class Undo(commands.Cog):
         select = Select(min_values = 1, max_values = 1, options=options)
         async def my_callback(interaction):
             relevant_result = select.view.data[(int(select.values[0])-1) + int(select.view.beginning_index)]
-            store.delete_log(relevant_result[1].rowid)
-            store_goal = Set_Goal(_GOAL_DB)
-            goals = store_goal.get_goals(interaction.user.id)
+            with Store(_DB_NAME) as store:
+                store.delete_log(relevant_result[1].rowid)
+            with Set_Goal(_GOAL_DB) as store_goal:
+                goals = store_goal.get_goals(interaction.user.id)
             multipliers_path = _MULTIPLIERS
             try:
                 with open(multipliers_path, "r") as file:
@@ -169,8 +170,9 @@ class Undo(commands.Cog):
                     codes = json.load(file)
             except FileNotFoundError:
                 codes = {}
-            log = Log(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].note, relevant_result[1].created_at)
-            helpers.undo_goal(goals, log, store_goal, MULTIPLIERS)
+            log = Log(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].title, relevant_result[1].note, relevant_result[1].created_at)
+            with Set_Goal(_GOAL_DB) as store_goal:
+                helpers.undo_goal(goals, log, store_goal, MULTIPLIERS)
             store_goal.close()
             await interaction.response.edit_message(content='## **Deleted log.**')
 
