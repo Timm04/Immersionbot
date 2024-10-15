@@ -35,17 +35,18 @@ class UserSettings:
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
-
-    def __enter__(self):
-        return self
-
+        
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
 
     def close(self):
         self.conn.close()
 
+    def close(self):
+        self.conn.close()
+
     def fetch(self, query):
+        # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
         result = cursor.fetchall()
@@ -122,7 +123,7 @@ class Store:
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
-
+        
     def __enter__(self):
         return self
 
@@ -360,97 +361,16 @@ GROUP BY
         """
         
         return self.fetch(query)
-        # query = f"""
-        # with cte as (
-        # select discord_user_id, date(created_at) as created_at
-        # from logs WHERE discord_user_id={discord_user_id}
-        # group by discord_user_id, date(created_at)
-        # ),
-        # cte2 as (
-        # select *, julianday(created_at) - julianday(lag(created_at) over (partition by discord_user_id order by created_at)) as date_diff
-        # from cte 
-        # ),
-        # cte3 as (
-        # select *, SUM(CASE WHEN date_diff = 1 THEN 0 ELSE 1 END) OVER (partition by discord_user_id order by created_at) AS grp 
-        # from cte2
-        # ),
-        # cte4 as (
-        # select discord_user_id, count(1) as period_length
-        # from cte3
-        # group by discord_user_id, grp
-        # )
-        # select discord_user_id, max(period_length) as longest_period
-        # from cte4
-        # group by discord_user_id"""
-#         query = f"""
-#         with user_date_combos as (
-#     select distinct
-#            discord_guild_id,
-#            date(created_at) as created_date
-#       from logs WHERE discord_guild_id={discord_user_id}
-# ),
-# consecutive_grouping AS (
-#     SELECT
-#       discord_guild_id,
-#       created_date,
-#       created_date - cast(ROW_NUMBER() OVER (
-#         partition by discord_guild_id
-#             ORDER BY created_date) as int) + 1 as start_of_streak
-#     FROM user_date_combos
-#   )
-# select discord_guild_id,
-#        max(length_of_streak) as longest_streak
-#   from (
-#        select discord_guild_id,
-#               start_of_streak,
-#               count(1) as length_of_streak
-#          from consecutive_grouping
-#         group
-#            by discord_guild_id,
-#               start_of_streak) as tmp
-#  group
-#     by discord_guild_id"""
-#         query = f"""WITH
- 
-#   -- This table contains all the distinct date 
-#   -- instances in the data set
-#   dates(date) AS (
-#     SELECT DISTINCT CAST(created_at AS DATE)
-#     FROM logs
-#     WHERE discord_user_id={discord_user_id}
-#   ),
-   
-#   -- Generate "groups" of dates by subtracting the
-#   -- date's row number (no gaps) from the date itself
-#   -- (with potential gaps). Whenever there is a gap,
-#   -- there will be a new group
-#   groups AS (
-#     SELECT
-#       ROW_NUMBER() OVER (ORDER BY date) AS rn,
-#       dateadd(day, -ROW_NUMBER() OVER (ORDER BY date), date) AS grp,
-#       date
-#     FROM dates
-#   )
-# SELECT
-#   COUNT(*) AS consecutiveDates,
-#   MIN(date) AS minDate,
-#   MAX(date) AS maxDate
-# FROM groups
-# GROUP BY grp
-# ORDER BY 1 DESC, 2 DESC"""
-        # query = f"""SELECT DISTINCT 
-        # discord_guild_id, created_at RANK() OVER(PARTITION BY discord_user_id ORDER BY created_at) rank 
-        # FROM logs WHERE discord_user_id={discord_user_id}"""
 
 class Set_jp:
     def __init__(self, db_name):
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
-
+        
     def __enter__(self):
         return self
-
+    
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
 
@@ -548,13 +468,13 @@ class Set_Goal:
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
-
-    def __enter__(self):
-        return self
-
+    
+    def close(self):
+        self.conn.close()
+        
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
-    
+
     def close(self):
         self.conn.close()
 
