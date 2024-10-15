@@ -9,9 +9,11 @@ Powerful features that it provides:
 - 📝 Logging your learning progress with the ability to use APIs like Anilist and VNDB to get more details for your immersion.
 - 🔍 Visualizes your own and others progress with graphs.
 - 💪 Compete with everyone in a friendly environment on the leaderboard and get a reward at the end of each month. 
-- 🔑 Allows you to export your progress so you can analyze it even better
+- 🔑 Allows you to export your progress so you can analyze it even better.
 - ⚙️ Built in log deletion in case you make a mistake with your logs.
 - 🙋‍♂️ Streak counts and achievements to motivate you to immerse more.
+- 🗣️ Rack up immersion points by outputting in Japanese.
+- 🔎 Displays indepth immersion information with adjustable timeframes allowing you to view data from any time.
 
 ![image](img/logging_anime.png)![Discord_qAaMhCHKcP](img/logging_listening_youtube.png)![Discord_CugvmcF4Oj](img/immersion_graph.png)![Discord_1slmR1tO1L](img/leaderboard.png)
 
