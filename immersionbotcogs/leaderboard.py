@@ -22,10 +22,6 @@ class Leaderboard(commands.Cog):
     @app_commands.choices(media_type = [Choice(name="Visual Novels", value="VN"), Choice(name="Manga", value="MANGA"), Choice(name="Anime", value="ANIME"), Choice(name="Book", value="BOOK"), Choice(name="Readtime", value="READTIME"), Choice(name="Listening", value="LISTENING"), Choice(name="Reading", value="READING"), Choice(name="Output", value="OUTPUT")])
     @app_commands.describe(timeframe='''DEFAULT=MONTH; Week, Month, Year, All, [year-month-day] or [year-month-day-year-month-day]''')
     async def leaderboard(self, interaction: discord.Interaction, timeframe: Optional[str], media_type: Optional[str]):
-
-        # channel = interaction.channel
-        # if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private:
-        #     return await interaction.response.send_message(content='You can only log in #immersion-log or DMs.', ephemeral=True)
         
         bool, msg = helpers.check_maintenance()
         if bool:
@@ -59,8 +55,8 @@ class Leaderboard(commands.Cog):
             try:
                 dates = timeframe.split('-')
                 if len(timeframe.split('-')) == 6:
-                    beginn = interaction.created_at.replace(year=int(dates[0]), month=int(dates[1]), day=int(dates[2]))
-                    end = interaction.created_at.replace(year=int(dates[3]), month=int(dates[4]), day=int(dates[5]))
+                    beginn = interaction.created_at.replace(year=int(dates[0]), month=int(dates[1]), day=int(dates[2]), hour=0, minute=0, second=0)
+                    end = interaction.created_at.replace(year=int(dates[3]), month=int(dates[4]), day=int(dates[5]), hour=0, minute=0, second=0)
                     title = f"""{beginn.strftime("{0} %b").format(helpers.ordinal(beginn.day))}-{end.strftime("{0} %b").format(helpers.ordinal(end.day))}"""
                     if beginn > end:
                         return await interaction.response.send_message(content='You switched up the dates.', ephemeral=True)
