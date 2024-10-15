@@ -36,11 +36,16 @@ class UserSettings:
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.close()
+
     def close(self):
         self.conn.close()
 
     def fetch(self, query):
-        # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
         result = cursor.fetchall()
@@ -67,6 +72,12 @@ class Debug:
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.close()
 
     def close(self):
         self.conn.close()
@@ -111,6 +122,12 @@ class Store:
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.close()
     
     def close(self):
         self.conn.close()
@@ -431,6 +448,12 @@ class Set_jp:
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.close()
+
     def close(self):
         self.conn.close()
 
@@ -525,6 +548,12 @@ class Set_Goal:
         self.conn = sqlite3.connect(
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.close()
     
     def close(self):
         self.conn.close()
