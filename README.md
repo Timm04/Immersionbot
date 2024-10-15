@@ -198,7 +198,7 @@ By changing the `EMOJI_TABLE` in `modals/constants.py` you can change the emojis
 
 🚀 **Dip your toes into contributing by looking at issues with the label [good first issue](https://github.com/themoeway/Immersionbot/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).**
 
-Since this is a distributed effort, we **highly welcome new contributors**! Feel free to browse the [issue tracker]([https://github.com/yomidevs/yomitan/issues](https://github.com/themoeway/Immersionbot/issues)), and read our [contributing guidelines](contribute.md).
+Since this is a distributed effort, we **highly welcome new contributors**! Feel free to browse the [issue tracker](https://github.com/themoeway/Immersionbot/issues), and read our [contributing guidelines](contribute.md).
 
 If you're looking to code, please let us know what you plan on working on before submitting a Pull Request. This gives the core maintainers an opportunity to provide feedback early on before you dive too deep. You can do this by opening a Github Issue with the proposal.
 
