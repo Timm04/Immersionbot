@@ -181,8 +181,8 @@ class User(commands.Cog):
             try:
                 dates = timeframe.split('-')
                 if len(timeframe.split('-')) == 6:
-                    beginn = interaction.created_at.replace(year=int(dates[0]), month=int(dates[1]), day=int(dates[2]))
-                    end = interaction.created_at.replace(year=int(dates[3]), month=int(dates[4]), day=int(dates[5]))
+                    beginn = interaction.created_at.replace(year=int(dates[0]), month=int(dates[1]), day=int(dates[2]), hour=0, minute=0, second=0)
+                    end = interaction.created_at.replace(year=int(dates[3]), month=int(dates[4]), day=int(dates[5]), hour=0, minute=0, second=0)
                     timeframe = f"""{beginn.strftime("{0}").format(helpers.ordinal(beginn.day))}-{end.strftime("{0} %b").format(helpers.ordinal(end.day))}"""
                     if beginn > end:
                         return await interaction.response.send_message(content='You switched up the dates.', ephemeral=True)
@@ -270,8 +270,8 @@ class User(commands.Cog):
             try:
                 dates = timeframe.split('-')
                 if len(timeframe.split('-')) == 6:
-                    beginn = interaction.created_at.replace(year=int(dates[0]), month=int(dates[1]), day=int(dates[2]))
-                    end = interaction.created_at.replace(year=int(dates[3]), month=int(dates[4]), day=int(dates[5]))
+                    beginn = interaction.created_at.replace(year=int(dates[0]), month=int(dates[1]), day=int(dates[2]), hour=0, minute=0, second=0)
+                    end = interaction.created_at.replace(year=int(dates[3]), month=int(dates[4]), day=int(dates[5]), hour=0, minute=0, second=0)
                     timeframe = f"""{beginn.strftime("{0}").format(helpers.ordinal(beginn.day))}-{end.strftime("{0} %b").format(helpers.ordinal(end.day))}"""
                     if beginn > end:
                         return await interaction.response.send_message(content='You switched up the dates.', ephemeral=True)
