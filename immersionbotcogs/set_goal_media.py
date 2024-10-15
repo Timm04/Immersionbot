@@ -108,18 +108,18 @@ class Set_Goal_Media(commands.Cog):
                 if end < created_at:
                     return await interaction.response.send_message(ephemeral=True, content='''You can't set goals for the past.''')
 
-        store = Set_Goal(_GOAL_DB)
         goal_type = "MEDIA" if not name else "SPECIFIC"
-        bool = store.check_goal_exists(interaction.user.id, goal_type, span, media_type.upper(), name)
-        if bool:
-            return await interaction.response.send_message(ephemeral=True, content='You already set this goal.')
+        with Set_Goal(_GOAL_DB) as store:
+            bool = store.check_goal_exists(interaction.user.id, goal_type, span, media_type.upper(), name)
+            if bool:
+                return await interaction.response.send_message(ephemeral=True, content='You already set this goal.')
 
-        if len(store.get_goals(interaction.user.id)) > 10:
-            return await interaction.response.send_message(ephemeral=True, content='''You can't set more than 10 goals. To delete a goal do ```/delete_goal``''')
-        if not name:
-            name = ""
-            
-        store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, name, span, created_at, end)
+            if len(store.get_goals(interaction.user.id)) > 10:
+                return await interaction.response.send_message(ephemeral=True, content='''You can't set more than 10 goals. To delete a goal do ```/delete_goal``''')
+            if not name:
+                name = ""
+                
+            store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, name, span, created_at, end)
         
         multipliers_path = _MULTIPLIERS
         try:
@@ -139,8 +139,9 @@ class Set_Goal_Media(commands.Cog):
         store.close()
         goal_msgs = []
         for log in logs:
-            goal_msg = helpers.update_goals(interaction.user.id, [Goal(interaction.user.id, goal_type, MediaType[media_type.upper()], 0, amount.value, name, span, created_at, end)], Log_constructor(interaction.user.id, log.media_type.value, log.amount, log.title, log.note, log.created_at), store, media_type, MULTIPLIERS, codes, codes_path)
-            goal_msgs.append(goal_msg)
+            with Set_Goal(_GOAL_DB) as store:
+                goal_msg = helpers.update_goals(interaction.user.id, [Goal(interaction.user.id, goal_type, MediaType[media_type.upper()], 0, amount.value, name, span, created_at, end)], Log_constructor(interaction.user.id, log.media_type.value, log.amount, log.title, log.note, log.created_at), store, media_type, MULTIPLIERS, codes, codes_path)
+                goal_msgs.append(goal_msg)
             
         codes_path = _IMMERSION_CODES
         try:
