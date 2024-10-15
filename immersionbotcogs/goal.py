@@ -26,8 +26,8 @@ class Goal(commands.Cog):
         if bool:
             return await interaction.response.send_message(content=f'In maintenance: {msg.maintenance_msg}', ephemeral=True)
         
-        store_goal = Set_Goal(_GOAL_DB)
-        goals = store_goal.get_goals(interaction.user.id)
+        with Set_Goal(_GOAL_DB) as store_goal:
+            goals = store_goal.get_goals(interaction.user.id)
                 
         if not goals:
             return await interaction.response.send_message(ephemeral=True, content='No goals found. Set goals with ``/set_goal``.')

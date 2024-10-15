@@ -129,6 +129,7 @@ class Log(commands.Cog):
             log = Log_constructor(interaction.user.id, media_type, amount.value, name, comment, interaction.created_at)
             goal_message = helpers.update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, codes, codes_path)
             goals = store_goal.get_goals(interaction.user.id)
+            store_goal.close()
     
             goals_description = helpers.get_goal_description(goals, codes_path, codes)
             
@@ -171,6 +172,7 @@ class Log(commands.Cog):
         if old_next_achievement != new_rank_achievement:
             await interaction.channel.send(content=f'{interaction.user.mention} congrats on unlocking the achievement {media_type.upper()} {new_rank_name} {new_emoji} {str(int(current_rank_achievement))} {helpers.media_type_format(media_type.upper())}!!! {emoji()}')
 
+        store_prod.close()
         if goal_message != [] and goals:
             await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {emoji()}')
 

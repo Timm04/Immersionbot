@@ -146,6 +146,7 @@ class Goals_manager(commands.Cog):
         view = MyView(data=results, beginning_index=beginning_index, end_index=end_index)
         
         view.add_item(select)
+        store_goal.close()
         await interaction.response.send_message(embed=myembed, view=view, ephemeral=True)
 
     @tasks.loop(hours=24)
@@ -174,6 +175,7 @@ class Goals_manager(commands.Cog):
                     store.update_amount(Goal(goal.discord_user_id, goal.goal_type, goal.media_type, goal.current_amount, goal.amount, goal.text, goal.span, goal.created_at, goal.end), 0)
                 else:
                     continue
+        store.close()
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Goals_manager(bot))

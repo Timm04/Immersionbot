@@ -13,10 +13,10 @@ from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, A
 from modals.sql import Debug
 
 def check_maintenance():
-    debug = Debug("dbs/debug.db")
-    m = debug.check_maintenance()
-    msg = m.maintenance_msg
-    return m.bool, msg
+    with Debug("dbs/debug.db") as debug:
+        m = debug.check_maintenance()
+        msg = m.maintenance_msg
+        return m.bool, msg
 
 class SqliteEnum(Enum):
     def __conform__(self, protocol):

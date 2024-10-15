@@ -148,6 +148,7 @@ class Backfill(commands.Cog):
                     embed.set_thumbnail(url=url)
             return embed
         
+        store.close()
         await interaction.edit_original_response(embed=created_embed())
         
     @backfill.autocomplete('name')

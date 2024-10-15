@@ -84,11 +84,11 @@ class Leaderboard(commands.Cog):
         except FileNotFoundError:
             MULTIPLIERS = {}
         if media_type != "OUTPUT":
-            store = Store(_DB_NAME)
-            leaderboard = store.get_leaderboard(interaction.user.id, (beginn, end), media_type, MULTIPLIERS)
+            with Store(_DB_NAME) as store:
+                leaderboard = store.get_leaderboard(interaction.user.id, (beginn, end), media_type, MULTIPLIERS)
         else:
-            store = Set_jp(_JP_DB)
-            leaderboard = store.get_jp_leaderboard(interaction.user.id, (beginn, end))
+            with Set_jp(_JP_DB) as store:
+                leaderboard = store.get_jp_leaderboard(interaction.user.id, (beginn, end))
 
         multipliers_path = _MULTIPLIERS
         try:

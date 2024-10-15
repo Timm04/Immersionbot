@@ -36,11 +36,16 @@ class UserSettings:
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
 
+    def close(self):
+        self.conn.close()
+
     def fetch(self, query):
         # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        result = cursor.fetchall()
+        cursor.close()
+        return result
     
     def register_user(self, discord_user_id, timezone):
         with self.conn:
@@ -53,7 +58,9 @@ class UserSettings:
             ) AS didTry"""
         cursor = self.conn.cursor()
         cursor.execute(query, [discord_user_id])
-        return cursor.fetchall()[0][0] == 1
+        result = cursor.fetchall()[0][0] == 1
+        cursor.close()
+        return result
 
 class Debug:
     def __init__(self, db_name):
@@ -61,11 +68,16 @@ class Debug:
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
 
+    def close(self):
+        self.conn.close()
+
     def fetch(self, query):
         # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        result = cursor.fetchall()
+        cursor.close()
+        return result
     
     def start_maintenance(self, discord_user_id, maintenance_msg):
         with self.conn:
@@ -91,6 +103,7 @@ class Debug:
             message = cursor.fetchall()[0]
         else:
             message = ""
+        cursor.close()
         return m(bool, message)
 
 class Store:
@@ -99,11 +112,16 @@ class Store:
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
     
+    def close(self):
+        self.conn.close()
+
     def fetch(self, query):
         # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        result = cursor.fetchall()
+        cursor.close()
+        return result
 
     def new_log(
         self, discord_guild_id, discord_user_id, media_type, amount, title, note, created_at
@@ -249,6 +267,7 @@ class Store:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
 
     def get_goal_relevant_logs(self, discord_user_id, beginn, end):
         where_clause = f"""discord_user_id={discord_user_id} AND created_at BETWEEN '{beginn}' AND '{end}'"""
@@ -412,11 +431,16 @@ class Set_jp:
             db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.conn.row_factory = namedtuple_factory
 
+    def close(self):
+        self.conn.close()
+
     def fetch(self, query):
         # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        result = cursor.fetchall()
+        cursor.close()
+        return result
 
     def all_output(self):
         query = """SELECT channel_id, SUM(amount) AS total_amount
@@ -431,6 +455,7 @@ class Set_jp:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
     
     def log_jp(self, discord_user_id, channel_id, msg_id, media_type, jp, amount, created_at):
         with self.conn:
@@ -459,7 +484,9 @@ class Set_jp:
             ) AS didTry"""
         cursor = self.conn.cursor()
         cursor.execute(query, [discord_user_id, content])
-        return cursor.fetchall()[0][0] == 1
+        result = cursor.fetchall()[0][0] == 1
+        cursor.close()
+        return result
     
     def get_jp_leaderboard(self, discord_user_id, timeframe):
         with self.conn:
@@ -495,15 +522,20 @@ class Set_jp:
 
 class Set_Goal:
     def __init__(self, db_name):
-            self.conn = sqlite3.connect(
-                db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
-            self.conn.row_factory = namedtuple_factory
+        self.conn = sqlite3.connect(
+            db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+        self.conn.row_factory = namedtuple_factory
+    
+    def close(self):
+        self.conn.close()
 
     def fetch(self, query):
         # print(query)
         cursor = self.conn.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        result = cursor.fetchall()
+        cursor.close()
+        return result
 
     def new_goal(self, discord_user_id, goal_type, media_type, current_amount, amount, text, span, created_at, end):
         with self.conn:
@@ -591,7 +623,9 @@ class Set_Goal:
             ) AS didTry"""
             cursor.execute(query, [discord_user_id, goal_type, span, media_type])
 
-        return cursor.fetchall()[0][0] == 1
+        result = cursor.fetchall()[0][0] == 1
+        cursor.close()
+        return result
     
     def goal_already_completed_before(self, discord_user_id, goal_type, media_type, text):
         # print(discord_user_id, goal_type, media_type, text)
@@ -600,7 +634,9 @@ class Set_Goal:
             ) AS didTry"""
         cursor = self.conn.cursor()
         cursor.execute(query, [discord_user_id, goal_type, media_type, text])
-        return cursor.fetchall()[0][0] == 1
+        result = cursor.fetchall()[0][0] == 1
+        cursor.close()
+        return result
     
     def goal_completed(self, discord_user_id, goal_type, amount, media_type, text):
         with self.conn:
@@ -636,6 +672,7 @@ class Set_Goal:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
         
     def get_one_goal(self, discord_user_id, media_type, amount, span):
         where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND amount={amount} AND span='{span}'"
@@ -654,6 +691,7 @@ class Set_Goal:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
 
     def update_amount(self, goal, amount):
         where_clause = f"WHERE discord_user_id={goal.duid} AND goal_type='{goal.goal_type}' AND media_type='{goal.media_type.value}' AND amount={goal.amount} AND text='{goal.text}' AND span='{goal.span}' AND created_at='{goal.created_at}' AND end='{goal.end}'"
@@ -661,6 +699,7 @@ class Set_Goal:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
         
     def update_end(self, goal, end):
         where_clause = f"WHERE discord_user_id={goal.duid} AND goal_type='{goal.goal_type}' AND media_type='{goal.media_type.value}' AND amount={goal.amount} AND text='{goal.text}' AND span='{goal.span}' AND created_at='{goal.created_at}' AND end='{goal.end}'"
@@ -668,6 +707,7 @@ class Set_Goal:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
         
         
     def search_completed(self, goal):
@@ -676,3 +716,4 @@ class Set_Goal:
         cursor = self.conn.cursor()
         cursor.execute(query)
         self.conn.commit()
+        cursor.close()
