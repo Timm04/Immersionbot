@@ -85,10 +85,6 @@ class Goals_manager(commands.Cog):
     @app_commands.command(name='delete_goal', description=f'Delete an immersion goal.')
     async def delete_goal(self, interaction: discord.Interaction):
         
-        # channel = interaction.channel
-        # if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private:
-        #     return await interaction.response.send_message(content='You can only delete your goals in #immersion-log or DMs.',ephemeral=True)
-        
         bool, msg = helpers.check_maintenance()
         if bool:
             return await interaction.response.send_message(content=f'In maintenance: {msg.maintenance_msg}', ephemeral=True)
@@ -151,30 +147,30 @@ class Goals_manager(commands.Cog):
 
     @tasks.loop(hours=24)
     async def batch_update(self):
-        store = Set_Goal(_GOAL_DB)
-        goals = store.get_all_goals()
-        for goal in goals:
-            if goal.span == "DAY" or goal.span == "DATE":
-                if pytz.utc.localize(datetime.now()) > datetime.strptime(goal.end, "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC):
-                    store.delete_goal(goal.discord_user_id, goal.media_type.value, goal.amount, goal.span)
-                    store.delete_completed(goal.discord_user_id, goal.span, goal.amount, goal.media_type.value, goal.text)
-                    continue
-                else:
-                    continue
-            elif goal.span == "WEEKLY" or goal.span == "DAILY":
-                if pytz.utc.localize(datetime.now()) > datetime.strptime(goal.end, "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC):
-                    if goal.span == "DAILY":
-                        end = pytz.utc.localize(datetime.now()) + timedelta(days=1)
-                        end.replace(hour=0, minute=0, second=0, microsecond=0)
+        with Set_Goal(_GOAL_DB) as store:
+            goals = store.get_all_goals()
+            for goal in goals:
+                if goal.span == "DAY" or goal.span == "DATE":
+                    if pytz.utc.localize(datetime.now()) > datetime.strptime(goal.end, "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC):
+                        store.delete_goal(goal.discord_user_id, goal.media_type.value, goal.amount, goal.span)
+                        store.delete_completed(goal.discord_user_id, goal.span, goal.amount, goal.media_type.value, goal.text)
+                        continue
                     else:
-                        now = pytz.utc.localize(datetime.now())
-                        created_at = now - timedelta(days=now.weekday())
-                        end = created_at + timedelta(days=6)
-                    print(end)
-                    store.update_end(Goal(goal.discord_user_id, goal.goal_type, goal.media_type, goal.current_amount, goal.amount, goal.text, goal.span, goal.created_at, goal.end), end)
-                    store.update_amount(Goal(goal.discord_user_id, goal.goal_type, goal.media_type, goal.current_amount, goal.amount, goal.text, goal.span, goal.created_at, goal.end), 0)
-                else:
-                    continue
+                        continue
+                elif goal.span == "WEEKLY" or goal.span == "DAILY":
+                    if pytz.utc.localize(datetime.now()) > datetime.strptime(goal.end, "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC):
+                        if goal.span == "DAILY":
+                            end = pytz.utc.localize(datetime.now()) + timedelta(days=1)
+                            end.replace(hour=0, minute=0, second=0, microsecond=0)
+                        else:
+                            now = pytz.utc.localize(datetime.now())
+                            created_at = now - timedelta(days=now.weekday())
+                            end = created_at + timedelta(days=6)
+                        print(end)
+                        store.update_end(Goal(goal.discord_user_id, goal.goal_type, goal.media_type, goal.current_amount, goal.amount, goal.text, goal.span, goal.created_at, goal.end), end)
+                        store.update_amount(Goal(goal.discord_user_id, goal.goal_type, goal.media_type, goal.current_amount, goal.amount, goal.text, goal.span, goal.created_at, goal.end), 0)
+                    else:
+                        continue
         store.close()
 
 async def setup(bot: commands.Bot) -> None:
