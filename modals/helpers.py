@@ -7,6 +7,7 @@ from vndb_thigh_highs import VNDB
 from vndb_thigh_highs.models import VN
 from datetime import datetime, timedelta
 from AnilistPython import Anilist
+import tmdbsimple as tmdb
 import random
 from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, ACHIEVEMENT_EMOJIS, ACHIEVEMENT_IDS, EMOJI_TABLE, JACK_FILTER
 
@@ -512,6 +513,8 @@ def get_name_of_immersion(media_type, name, codes, file_path):
             return f'VNDB: [{medium[0]}]({medium[1]})', medium[0], medium[1], medium[2]
         elif name.isdigit():
             return f'Anilist: [{medium[0]}]({medium[1]})', medium[0], medium[1], medium[2]
+        else:
+            return f'TMDB: [{medium[0]}]({medium[1]})', medium[0], medium[1], medium[2]
     
     def not_found():
         return f"{media_type}"
@@ -561,6 +564,41 @@ def get_name_of_immersion(media_type, name, codes, file_path):
                     return f'Anilist: [{anime_info["name_english"]}](https://anilist.co/anime/{name}/{updated_title}/)', anime_info["name_english"], f'https://anilist.co/anime/{name}/{updated_title}/', anime_info["cover_image"]
         except Exception:
             return "Source: N/A", f"{name}", "https://anilist.co/home", None
+    elif name and media_type == 'LISTENING':
+        name = eval(name)
+        tmdb = tmdbv3api.TMDb()
+        tmdb.api_key = 'API_KEY_HERE'
+        tmdb.REQUESTS_SESSION = requests.Session()
+        
+        try:
+            media_id = name[0]
+            media_type = name[1]
+            media_image = name[2]
+
+            if media_type == "movie":
+                movie = tmdbv3api.Movie()
+                response = movie.details(media_id)
+                media_type = "movie"
+            else:
+                tv = tmdbv3api.TV()
+                response = tv.details(media_id)
+                media_type = "tv"
+
+            media_url = f"https://www.themoviedb.org/{media_type}/{media_id}"
+
+            title = response.get('name') or response.get('title')
+            image_url = f"https://image.tmdb.org/t/p/original{media_image}"
+
+            if media_id not in codes.keys():
+                codes[media_id] = [title, media_url, image_url]
+                with open(file_path, "w") as file:
+                    json.dump(codes, file)
+
+            return f"TMDB: [{title}]({media_url})", title, media_url, image_url
+        
+        except Exception as e:
+            print(f"Error fetching media info: {e}")
+            return None
         
     elif name:
         return "Source: N/A", f"{name}", "https://anilist.co/home", None
