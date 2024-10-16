@@ -89,11 +89,9 @@ class Log(commands.Cog):
         await interaction.response.defer()
 
         date = interaction.created_at
-        store_goal = Set_Goal(_GOAL_DB)
-    
-        goals = store_goal.get_goals(interaction.user.id)
+        with Set_Goal(_GOAL_DB) as store_goal:
+            goals = store_goal.get_goals(interaction.user.id)
         
-        store_prod = Store(_DB_NAME)
         first_date = date.replace(day=1, hour=0, minute=0, second=0)
 
         multipliers_path = _MULTIPLIERS
@@ -111,24 +109,27 @@ class Log(commands.Cog):
             codes = {}
         calc_amount, format, msg, immersion_title = helpers.point_message_converter(media_type.upper(), amount.value, name, MULTIPLIERS, codes, codes_path)
         print(first_date, date)
-        old_points = store_prod.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
+        with Store(_DB_NAME) as store_prod:
+            old_points = store_prod.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
 
-        old_weighed_points_mediums = helpers.multiplied_points(old_points, MULTIPLIERS)
+            old_weighed_points_mediums = helpers.multiplied_points(old_points, MULTIPLIERS)
 
-        old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store_prod, MULTIPLIERS)
+            old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store_prod, MULTIPLIERS)
 
-        store_prod.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
-        
-        current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store_prod, MULTIPLIERS)
+            store_prod.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
+            
+            current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store_prod, MULTIPLIERS)
 
 
-        current_points = store_prod.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
+            current_points = store_prod.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
         current_weighed_points_mediums = helpers.multiplied_points(current_points, MULTIPLIERS)
 
         if goals:
             log = Log_constructor(interaction.user.id, media_type, amount.value, name, comment, interaction.created_at)
-            goal_message = helpers.update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, codes, codes_path)
-            goals = store_goal.get_goals(interaction.user.id)
+            with Set_Goal(_GOAL_DB) as store_goal:
+                goal_message = helpers.update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, codes, codes_path)
+            with Set_Goal(_GOAL_DB) as store_goal:
+                goals = store_goal.get_goals(interaction.user.id)
             store_goal.close()
     
             goals_description = helpers.get_goal_description(goals, codes_path, codes)
@@ -151,7 +152,8 @@ class Log(commands.Cog):
 
         def created_embed():
             embed = discord.Embed(title=f'''Logged {round(amount.value,2)} {format} of {immersion_title[1]} {emoji()}''', description=f'{immersion_title[0]}\n\n{msg}\n{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}', color=discord.Colour.random())
-            embed.add_field(name='Streak', value=f'current streak: **{store_prod.get_log_streak(interaction.user.id)[0].current_streak} days**')
+            with Store(_DB_NAME) as store_prod:
+                embed.add_field(name='Streak', value=f'current streak: **{store_prod.get_log_streak(interaction.user.id)[0].current_streak} days**')
             if new_next_rank_name != "Master" and old_next_achievement == new_rank_achievement:
                 embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(round(new_rank_achievement-current_achievemnt_points, 2)) + " " + helpers.media_type_format(media_type.upper()))
             elif old_next_achievement != new_rank_achievement:
