@@ -89,8 +89,8 @@ class Goals_manager(commands.Cog):
         if bool:
             return await interaction.response.send_message(content=f'In maintenance: {msg.maintenance_msg}', ephemeral=True)
         
-        store_goal = Set_Goal(_GOAL_DB)
-        goals = store_goal.get_goals(interaction.user.id)
+        with Set_Goal(_GOAL_DB) as store_goal:
+            goals = store_goal.get_goals(interaction.user.id)
         if not goals:
             return await interaction.response.send_message(ephemeral=True, content='No goals found. Set goals with ``/set_goal``.')
 
@@ -135,7 +135,8 @@ class Goals_manager(commands.Cog):
         select = Select(min_values = 1, max_values = 1, options=options)
         async def my_callback(interaction):
             relevant_result = select.view.data[(int(select.values[0])-1) + int(select.view.beginning_index)]
-            store_goal.delete_goal(interaction.user.id, relevant_result[2].media_type.value, relevant_result[2].amount, relevant_result[2].span)        
+            with Set_Goal(_GOAL_DB) as store_goal:
+                store_goal.delete_goal(interaction.user.id, relevant_result[2].media_type.value, relevant_result[2].amount, relevant_result[2].span)        
             await interaction.response.edit_message(content='## **Deleted goal.**')
 
         select.callback = my_callback
