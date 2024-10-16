@@ -643,7 +643,12 @@ class Set_Goal:
         cursor.close()
 
     def update_amount(self, goal, amount):
-        where_clause = f"WHERE discord_user_id={goal.duid} AND goal_type='{goal.goal_type}' AND media_type='{goal.media_type.value}' AND amount={goal.amount} AND text='{goal.text}' AND span='{goal.span}' AND created_at='{goal.created_at}' AND end='{goal.end}'"
+        if goal.goal_type == "SPECIFIC" and goal.media_type.value == "LISTENING":
+            data = eval(goal.text)
+            goal_text = str([data[0], f'{data[1]}', f'{data[2]}']).replace("'", "''")
+        else:
+            goal_text = goal.text
+        where_clause = f"WHERE discord_user_id={goal.duid} AND goal_type='{goal.goal_type}' AND media_type='{goal.media_type.value}' AND amount={goal.amount} AND text='{goal_text}' AND span='{goal.span}' AND created_at='{goal.created_at}' AND end='{goal.end}'"
         query = f"""UPDATE goals SET current_amount={amount} {where_clause}"""
         cursor = self.conn.cursor()
         cursor.execute(query)
