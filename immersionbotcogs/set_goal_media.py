@@ -119,7 +119,10 @@ class Set_Goal_Media(commands.Cog):
             if not name:
                 name = ""
                 
-            store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, name, span, created_at, end)
+            if goal_type == "SPECIFIC" and media_type == "LISTENING":
+                store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, str(eval(name)).replace("'", "''"), span, created_at, end)
+            else:
+                store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, name, span, created_at, end)
         
         multipliers_path = _MULTIPLIERS
         try:
