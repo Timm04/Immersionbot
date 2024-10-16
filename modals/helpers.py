@@ -271,10 +271,14 @@ def update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, c
     goals_to_update = []
     goal_message = []
     for goals_row in goals:
+        if goals_row.media_type.value == "LISTENING" and goals_row.goal_type == "SPECIFIC":
+            goals_row_text = goals_row.text.replace("''", "'")
+        else:
+            goals_row_text = goals_row.text
         list = []
         if goals_row.amount <= goals_row.current_amount:
             continue
-        if goals_row.goal_type == "SPECIFIC" and goals_row.text == log.title and goals_row.media_type.value == log.media_type.upper():
+        if goals_row.goal_type == "SPECIFIC" and goals_row_text == log.title and goals_row.media_type.value == log.media_type.upper():
             list.append(log.amount)
         elif goals_row.media_type.value == log.media_type.upper() and goals_row.goal_type != "SPECIFIC":
             if goals_row.goal_type == "MEDIA":
@@ -284,10 +288,10 @@ def update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, c
         elif goals_row.media_type.value == "ANYTHING":
             list.append(_to_amount(log.media_type.upper(), log.amount, MULTIPLIERS))
         points = sum(list)
-        goals_to_update.append(Goal(log.duid, goals_row.goal_type, goals_row.media_type, goals_row.current_amount + round(points, 2), goals_row.amount, goals_row.text, goals_row.span, goals_row.created_at, goals_row.end))
-        if goals_row.amount == goals_row.current_amount + round(points, 2) and not store_goal.goal_already_completed_before(interaction.user.id, goals_row.span, goals_row.media_type, goals_row.text):
-            goal_message.append((interaction.user.mention, media_type_grammer(media_type.upper()), goals_row.amount, media_type_format(media_type.upper()), get_name_of_immersion(goals_row.media_type.value, goals_row.text, codes, file_path)[1], random_emoji()))
-            store_goal.goal_completed(interaction.user.id, goals_row.span, goals_row.amount, goals_row.media_type, goals_row.text)
+        goals_to_update.append(Goal(log.duid, goals_row.goal_type, goals_row.media_type, goals_row.current_amount + round(points, 2), goals_row.amount, goals_row_text, goals_row.span, goals_row.created_at, goals_row.end))
+        if goals_row.amount == goals_row.current_amount + round(points, 2) and not store_goal.goal_already_completed_before(interaction.user.id, goals_row.span, goals_row.media_type, goals_row_text):
+            goal_message.append((interaction.user.mention, media_type_grammer(media_type.upper()), goals_row.amount, media_type_format(media_type.upper()), get_name_of_immersion(goals_row.media_type.value, goals_row_text, codes, file_path)[1], random_emoji()))
+            store_goal.goal_completed(interaction.user.id, goals_row.span, goals_row.amount, goals_row.media_type, goals_row_text)
 
     for goal in goals_to_update:
         store_goal.update_amount(goal, goal.current_amount)
