@@ -475,8 +475,8 @@ class Set_Goal:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
 
-    def close(self):
-        self.conn.close()
+    def __enter__(self):
+        return self
 
     def fetch(self, query):
         # print(query)
