@@ -34,7 +34,7 @@ You can log immersion for the following mediums:
 - Listening
 - Reading
 
-But you can also earn points by outputting in Japanese. By writing a message in Japanese you will also get points which will count towards your immersion.
+**But you can also earn points by outputting in Japanese. By writing a message in Japanese you will also get points which will count towards your immersion.**
 
 ```/log [media_type] [amount] Optional(title) Optional(comment)```
 
