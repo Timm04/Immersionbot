@@ -26,4 +26,4 @@ The immersion bot uses [Python 3.9.0](https://www.python.org/downloads/release/p
 
 ##  Testing
 
-TBD by TMW admins.
+Unit tests and various other tests can be executed by running `python -m pytest -v`. The source for the specific tests can be find in the [test](https://github.com/themoeway/Immersionbot/tree/main/test) directory.
