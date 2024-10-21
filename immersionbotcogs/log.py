@@ -23,8 +23,10 @@ log = logging.getLogger(__name__)
 
 class Log(commands.Cog):
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot, db_conn=None, goal_conn=None) -> None:
         self.bot = bot
+        self.conn = db_conn if db_conn else Store(_DB_NAME)
+        self.goal = goal_conn if goal_conn else Set_Goal(_GOAL_DB)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -36,8 +38,8 @@ class Log(commands.Cog):
     @app_commands.describe(name='''You can use vndb IDs and titles for VN and Anilist codes for Anime and Manga''')
     @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="Manga"), Choice(name="Anime", value="Anime"), Choice(name="Book", value="Book"), Choice(name="Readtime", value="Readtime"), Choice(name="Listening", value="Listening"), Choice(name="Reading", value="Reading")])
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str]):
-        #only allowed to log in #bot-debug, #immersion-logs, DMs
-        #DMs not working
+        # only allowed to log in #bot-debug, #immersion-logs, DMs
+        # DMs not working
         channel = interaction.channel
         if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private and channel.id != 947813835715256393:
             return await interaction.response.send_message(ephemeral=True, content='You can only log in #immersion-log or DMs.')
@@ -50,7 +52,7 @@ class Log(commands.Cog):
         if not amount.bool:
             return await interaction.response.send_message(ephemeral=True, content='Enter a valid number.')
         
-        #introducing upperbound for amount to log for each media_type
+        # introducing upperbound for amount to log for each media_type
         if not amount.value > 0:
             return await interaction.response.send_message(ephemeral=True, content='Only positive numbers allowed.')
 
@@ -89,9 +91,7 @@ class Log(commands.Cog):
         await interaction.response.defer()
 
         date = interaction.created_at
-        with Set_Goal(_GOAL_DB) as store_goal:
-            goals = store_goal.get_goals(interaction.user.id)
-        
+        goals = self.goal.get_goals(interaction.user.id)
         first_date = date.replace(day=1, hour=0, minute=0, second=0)
 
         multipliers_path = _MULTIPLIERS
@@ -109,28 +109,27 @@ class Log(commands.Cog):
             codes = {}
         calc_amount, format, msg, immersion_title = helpers.point_message_converter(media_type.upper(), amount.value, name, MULTIPLIERS, codes, codes_path)
         print(first_date, date)
-        with Store(_DB_NAME) as store_prod:
-            old_points = store_prod.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
-
-            old_weighed_points_mediums = helpers.multiplied_points(old_points, MULTIPLIERS)
-
-            old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store_prod, MULTIPLIERS)
-
-            store_prod.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
+        
+        old_points = self.conn.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
             
-            current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store_prod, MULTIPLIERS)
+        
+        monthy_points_before_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
+        
+        old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
+
+        self.conn.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
+        
+        current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
 
 
-            current_points = store_prod.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
-        current_weighed_points_mediums = helpers.multiplied_points(current_points, MULTIPLIERS)
+        current_points = self.conn.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
+        
+        monthly_points_after_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
 
         if goals:
             log = Log_constructor(interaction.user.id, media_type, amount.value, name, comment, interaction.created_at)
-            with Set_Goal(_GOAL_DB) as store_goal:
-                goal_message = helpers.update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, codes, codes_path)
-            with Set_Goal(_GOAL_DB) as store_goal:
-                goals = store_goal.get_goals(interaction.user.id)
-            store_goal.close()
+            goal_message = helpers.update_goals(interaction, goals, log, self.goal, media_type, MULTIPLIERS, codes, codes_path)
+            goals = self.goal.get_goals(interaction.user.id)
     
             goals_description = helpers.get_goal_description(goals, codes_path, codes)
             
@@ -151,16 +150,15 @@ class Log(commands.Cog):
             return f"{date.strftime('%b')} {day}{suffix} {date.strftime('%Y')}"
 
         def created_embed():
-            embed = discord.Embed(title=f'''Logged {round(amount.value,2)} {format} of {immersion_title[1]} {emoji()}''', description=f'{immersion_title[0]}\n\n{msg}\n{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}', color=discord.Colour.random())
-            with Store(_DB_NAME) as store_prod:
-                embed.add_field(name='Streak', value=f'current streak: **{store_prod.get_log_streak(interaction.user.id)[0].current_streak} days**')
+            embed = discord.Embed(title=f'''Logged {round(amount.value,2)} {format} of {immersion_title[1]} {emoji()}''', description=f'{immersion_title[0]}\n\n{msg}\n{date.strftime("%B")}: ~~{monthy_points_before_log}~~ → {monthly_points_after_log}', color=discord.Colour.random())
+            embed.add_field(name='Streak', value=f'current streak: **{self.conn.get_log_streak(interaction.user.id)[0].current_streak} days**')
             if new_next_rank_name != "Master" and old_next_achievement == new_rank_achievement:
                 embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(round(new_rank_achievement-current_achievemnt_points, 2)) + " " + helpers.media_type_format(media_type.upper()))
             elif old_next_achievement != new_rank_achievement:
-                embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()), inline=True)
+                embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()), inline=True)
             if goals_description:
                 embed.add_field(name='Goals', value='\n'.join(goals_description), inline=False)
-            #embed.add_field(name='Breakdown', value=f'{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(old_weighed_points_mediums.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}')
+            #embed.add_field(name='Breakdown', value=f'{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(monthy_points_before_log.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}')
             embed.set_footer(text=f'From {interaction.user.display_name} on {add_suffix_to_date(interaction.created_at)}', icon_url=interaction.user.display_avatar.url)
             if immersion_title[3]:
                 url = immersion_title[3]
@@ -174,10 +172,13 @@ class Log(commands.Cog):
         if old_next_achievement != new_rank_achievement:
             await interaction.channel.send(content=f'{interaction.user.mention} congrats on unlocking the achievement {media_type.upper()} {new_rank_name} {new_emoji} {str(int(current_rank_achievement))} {helpers.media_type_format(media_type.upper())}!!! {emoji()}')
 
-        store_prod.close()
         if goal_message != [] and goals:
             await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {emoji()}')
-
+        
+        if self.conn.check_if_in_memory():
+            self.conn.close()
+            self.goal.close()
+        
     @log.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
 

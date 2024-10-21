@@ -43,11 +43,5 @@ class Goal(commands.Cog):
         
         return await interaction.response.send_message(ephemeral=True, content=f'''## {interaction.user.display_name}'s Goal Overview\n{goals_description if goals_description else "No goals found."}\n\nUse ``/set_goal`` to set your goals for <t:{int(time.mktime((interaction.created_at.replace(hour=0, minute=0, second=0, microsecond=0)).timetuple()))}:D> and more!''', suppress_embeds=True)
 
-        
-        # # dicts = helpers.get_time_relevant_logs(goals, relevant_logs)
-        # goals_description, goal_message = helpers.get_goal_description(logs=relevant_logs, goals=goals, log_bool=False, store=store_goal, interaction=interaction, media_type=None)
-
-        # await interaction.response.send_message(ephemeral=True, content=f'''## {interaction.user.display_name}'s Goal Overview\n{goals_description if goals_description else "No goals found."}\n\nUse ``/set_goal`` to set your goals for <t:{int(time.mktime((interaction.created_at.replace(hour=0, minute=0, second=0, microsecond=0)).timetuple()))}:D> and more!''')
-    
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Goal(bot))

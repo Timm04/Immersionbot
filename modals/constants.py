@@ -3,6 +3,7 @@ _JP_DB = "dbs/japanese.db"
 _GOAL_DB = "dbs/goals.db"
 _IMMERSION_CODES = "jsons/immersion_codes.json"
 _MULTIPLIERS = "jsons/multipliers.json"
+TMDB_API_KEY = "API KEY HERE"
 
 ACHIEVEMENTS = {
     "VN": [1, 50_000, 100_000, 500_000, 1_000_000, 2_000_000, 4_000_000, 10_000_000, float('inf')],
@@ -62,7 +63,7 @@ EMOJI_TABLE = {
     "KimoiHuh": 931588710473031761,
 }
 
-ALLOWED_CHANNELS= [796876740445208606]
+ALLOWED_CHANNELS = [796876740445208606]
 tmw_id = 947813835715256390
 TIMEFRAMES = ["WEEK, MONTH, YEAR, All"]
 
@@ -93,4 +94,14 @@ timezones = {
     "Europe/Istanbul": 3,  # Turkey Time (TRT)
     "Asia/Bangkok": 7,  # Indochina Time (ICT)
     "Africa/Johannesburg": 2,  # South Africa Standard Time (SAST)
+}
+
+MESSAGE_FORMATS = {
+    "VN": "{conversion} points/characters → +{points} points",
+    "MANGA": "{conversion} points per page → +{points} points",
+    "BOOK": "{conversion} point per page → +{points} points",
+    "ANIME": "{conversion} points per eps → +{points} points",
+    "READING": "{conversion} points/character of reading → +{points} points",
+    "READTIME": "{conversion} points/min of readtime → +{points} points",
+    "LISTENING": "{conversion} points/min of listening → +{points} points"
 }

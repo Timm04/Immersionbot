@@ -9,9 +9,23 @@ from datetime import datetime, timedelta
 from AnilistPython import Anilist
 import tmdbsimple as tmdb
 import random
-from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, ACHIEVEMENT_EMOJIS, ACHIEVEMENT_IDS, EMOJI_TABLE, JACK_FILTER
+import tmdbv3api
+import requests
+from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, ACHIEVEMENT_EMOJIS, ACHIEVEMENT_IDS, EMOJI_TABLE, JACK_FILTER, TMDB_API_KEY
 
 from modals.sql import Debug
+
+from modals.constants import MESSAGE_FORMATS
+
+def check_if_in_memory(conn):
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA database_list;")
+    databases = cursor.fetchall()
+
+    if databases and databases[0][2] == ':memory:':
+        return True
+    else:
+        return False
 
 def check_maintenance():
     with Debug("dbs/debug.db") as debug:
@@ -276,8 +290,6 @@ def update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, c
         else:
             goals_row_text = goals_row.text
         list = []
-        if goals_row.amount <= goals_row.current_amount:
-            continue
         if goals_row.goal_type == "SPECIFIC" and goals_row_text == log.title and goals_row.media_type.value == log.media_type.upper():
             list.append(log.amount)
         elif goals_row.media_type.value == log.media_type.upper() and goals_row.goal_type != "SPECIFIC":
@@ -288,8 +300,9 @@ def update_goals(interaction, goals, log, store_goal, media_type, MULTIPLIERS, c
         elif goals_row.media_type.value == "ANYTHING":
             list.append(_to_amount(log.media_type.upper(), log.amount, MULTIPLIERS))
         points = sum(list)
+
         goals_to_update.append(Goal(log.duid, goals_row.goal_type, goals_row.media_type, goals_row.current_amount + round(points, 2), goals_row.amount, goals_row_text, goals_row.span, goals_row.created_at, goals_row.end))
-        if goals_row.amount == goals_row.current_amount + round(points, 2) and not store_goal.goal_already_completed_before(interaction.user.id, goals_row.span, goals_row.media_type, goals_row_text):
+        if goals_row.amount <= goals_row.current_amount + round(points, 2) and not store_goal.goal_already_completed_before(interaction.user.id, goals_row.span, goals_row.media_type, goals_row_text):
             goal_message.append((interaction.user.mention, media_type_grammer(media_type.upper()), goals_row.amount, media_type_format(media_type.upper()), get_name_of_immersion(goals_row.media_type.value, goals_row_text, codes, file_path)[1], random_emoji()))
             store_goal.goal_completed(interaction.user.id, goals_row.span, goals_row.amount, goals_row.media_type, goals_row_text)
 
@@ -375,13 +388,13 @@ def media_type_format(media_type):
     elif media_type == "MANGA":
         return "pgs"
     elif media_type == "VN":
-        return "chrs"
+        return "chars"
     elif media_type == "ANIME":
         return "eps"
     elif media_type == "LISTENING":
         return "mins"
     elif media_type == "READING":
-        return "chrs"
+        return "chars"
     elif media_type == "READTIME":
         return "mins"
     elif media_type == "ANYTHING":
@@ -568,13 +581,14 @@ def get_name_of_immersion(media_type, name, codes, file_path):
                     return f'Anilist: [{anime_info["name_english"]}](https://anilist.co/anime/{name}/{updated_title}/)', anime_info["name_english"], f'https://anilist.co/anime/{name}/{updated_title}/', anime_info["cover_image"]
         except Exception:
             return "Source: N/A", f"{name}", "https://anilist.co/home", None
+        
     elif name and media_type == 'LISTENING':
-        name = eval(name)
         tmdb = tmdbv3api.TMDb()
-        tmdb.api_key = 'API_KEY_HERE'
+        tmdb.api_key = TMDB_API_KEY
         tmdb.REQUESTS_SESSION = requests.Session()
         
         try:
+            name = eval(name)
             media_id = name[0]
             media_type = name[1]
             media_image = name[2]
@@ -601,8 +615,7 @@ def get_name_of_immersion(media_type, name, codes, file_path):
             return f"TMDB: [{title}]({media_url})", title, media_url, image_url
         
         except Exception as e:
-            print(f"Error fetching media info: {e}")
-            return None
+            return "Source: N/A", f"{name}", "https://anilist.co/home", None
         
     elif name:
         return "Source: N/A", f"{name}", "https://anilist.co/home", None
@@ -610,35 +623,49 @@ def get_name_of_immersion(media_type, name, codes, file_path):
     return "Source: N/A", f"{not_found()}", "https://anilist.co/home", None
 
 from fractions import Fraction
+
+def media_type_format_grammar(media_type, amount):
+    format_mapping = {
+        "BOOK": "page",
+        "MANGA": "page",
+        "VN": "char",
+        "ANIME": "ep",
+        "LISTENING": "min",
+        "READING": "char",
+        "READTIME": "min",
+        "OUTPUT": "char"
+    }
+
+    format = format_mapping.get(media_type, "")
+    
+    return format + ("s" if amount != 1 else "")
+
+def format_message(media_type, points, MULTIPLIERS):
+    """Formats the message using the media_type and conversion."""
+    conversion = calculate_conversion(media_type, MULTIPLIERS)
+    points = point_rounding(points)
+
+    if media_type in MESSAGE_FORMATS:
+        return MESSAGE_FORMATS[media_type].format(conversion=conversion, points=points)
+    return ""
+
+def point_rounding(amount):
+    return round(amount, 4)
+
 def point_message_converter(media_type, amount, name, MULTIPLIERS, codes, file_path):
-        
-    if media_type == "VN":
-        try:
-            conversion = Fraction(MULTIPLIERS[media_type]).limit_denominator()
-        except Exception:
-            conversion = MULTIPLIERS[media_type]
-        return _to_amount(media_type, amount, MULTIPLIERS), "chars", f"{conversion} points/characters → +{round(_to_amount(media_type, amount, MULTIPLIERS),4)} points", get_name_of_immersion(media_type, name, codes, file_path)
-    elif media_type == "MANGA":
-        return _to_amount(media_type, amount, MULTIPLIERS), "pgs", f"{MULTIPLIERS[media_type]} points per page → +{round(_to_amount(media_type, amount, MULTIPLIERS), 4)} points", get_name_of_immersion(media_type, name, codes, file_path)
+    weighed_amount = _to_amount(media_type, amount, MULTIPLIERS)
     
-    elif media_type == "BOOK":
-        return _to_amount(media_type, amount, MULTIPLIERS), "pgs", f"{MULTIPLIERS[media_type]} point per page → +{round(_to_amount(media_type, amount, MULTIPLIERS), 4)} points", get_name_of_immersion(media_type, name, codes, file_path)
-    
-    elif media_type == "ANIME":
-        return _to_amount(media_type, amount, MULTIPLIERS), "eps", f"{MULTIPLIERS[media_type]} points per eps → +{round(_to_amount(media_type, amount, MULTIPLIERS), 4)} points", get_name_of_immersion(media_type, name, codes, file_path)
-    
-    elif media_type == "READING":
-        try:
-            conversion = Fraction(MULTIPLIERS[media_type]).limit_denominator()
-        except Exception:
-            conversion = MULTIPLIERS[media_type]
-        return _to_amount(media_type, amount, MULTIPLIERS), "chars", f"{conversion} points/character of reading → +{round(_to_amount(media_type, amount, MULTIPLIERS), 4)} points", get_name_of_immersion(media_type, name, codes, file_path)
-    
-    elif media_type == "READTIME":
-        return _to_amount(media_type, amount, MULTIPLIERS), "mins", f"{MULTIPLIERS[media_type]} points/min of readtime → +{round(_to_amount(media_type, amount, MULTIPLIERS), 4)} points", get_name_of_immersion(media_type, name, codes, file_path)
-    
-    if media_type == "LISTENING":
-        return _to_amount(media_type, amount, MULTIPLIERS), "mins", f"{MULTIPLIERS[media_type]} points/min of listening → +{round(_to_amount(media_type, amount, MULTIPLIERS),4)} points", get_name_of_immersion(media_type, name, codes, file_path)
+    message = format_message(media_type, weighed_amount, MULTIPLIERS)
+    immersion_name = get_name_of_immersion(media_type, name, codes, file_path)
+
+    return weighed_amount, media_type_format_grammar(media_type, amount), message, immersion_name
+
+def calculate_conversion(media_type, MULTIPLIERS):
+    try:
+        conversion = Fraction(MULTIPLIERS[media_type]).limit_denominator()
+    except Exception:
+        conversion = MULTIPLIERS[media_type]
+    return conversion
     
 def start_end_tf(now, timeframe):
     if timeframe == "Weekly":

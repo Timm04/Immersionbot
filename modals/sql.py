@@ -119,10 +119,26 @@ class Debug:
         return m(bool, message)
 
 class Store:
-    def __init__(self, db_name):
-        self.conn = sqlite3.connect(
-            db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    def __init__(self, db_name_or_conn):
+        # Check if the input is a string (file path) or an existing connection object
+        if isinstance(db_name_or_conn, str):
+            # Open a new connection if a file path is provided
+            self.conn = sqlite3.connect(
+                db_name_or_conn, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+        else:
+            # Use the provided connection object if not a string
+            self.conn = db_name_or_conn
+            
         self.conn.row_factory = namedtuple_factory
+        
+    def check_if_in_memory(self):
+        querry = "PRAGMA database_list;"
+        databases = self.fetch(querry)
+
+        if databases and databases[0][2] == ':memory:':
+            return True
+        else:
+            return False
         
     def __enter__(self):
         return self
@@ -145,7 +161,7 @@ class Store:
         self, discord_guild_id, discord_user_id, media_type, amount, title, note, created_at
     ):
         with self.conn:
-            self.conn.execute("INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, title, note, created_at)VALUES (?,?,?,?,?,?,?)", (int(discord_guild_id), int(discord_user_id), str(media_type), int(amount), str(title), str(note), created_at))
+            self.conn.execute("INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, title, note, created_at) VALUES (?,?,?,?,?,?,?)", (int(discord_guild_id), int(discord_user_id), str(media_type), int(amount), str(title), str(note), created_at))
             self.conn.commit()
             
     def current_points(self, discord_guild_id, discord_user_id, created_at):
@@ -155,8 +171,30 @@ class Store:
             WHERE discord_guild_id={discord_user_id} AND created_at BETWEEN '{created_at[0]}' AND '{created_at[1]}'
             """
         
-            return self.fetch(query)
+            result = self.fetch(query)
+            print(result)
         
+    def total_points_for_user(self, discord_user_id, MULTIPLIERS, timeframe):
+        with self.conn:
+            query = f"""
+            SELECT SUM(
+                CASE
+                    WHEN media_type = 'BOOK' THEN amount * {MULTIPLIERS['BOOK']}
+                    WHEN media_type = 'MANGA' THEN amount * {MULTIPLIERS['MANGA']}
+                    WHEN media_type = 'VN' THEN amount * {MULTIPLIERS['VN']}
+                    WHEN media_type = 'ANIME' THEN amount * {MULTIPLIERS['ANIME']}
+                    WHEN media_type = 'READING' THEN amount * {MULTIPLIERS['READING']}
+                    WHEN media_type = 'READTIME' THEN amount * {MULTIPLIERS['READTIME']}
+                    WHEN media_type = 'LISTENING' THEN amount * {MULTIPLIERS['LISTENING']}
+                END
+            ) AS total
+            FROM logs
+            WHERE discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'
+            """
+            result = self.fetch(query)[0].total
+
+            return 0 if result == None else round(result, 4)
+                
     def get_leaderboard(self, discord_user_id, timeframe, media_type, MULTIPLIERS):
         with self.conn:
             print(len(timeframe))
@@ -475,8 +513,8 @@ class Set_Goal:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
 
-    def close(self):
-        self.conn.close()
+    def __enter__(self):
+        return self
 
     def fetch(self, query):
         # print(query)
@@ -505,8 +543,6 @@ class Set_Goal:
         """
         
         return self.fetch(query)
-    
-    
             
     def new_point_goal(self, discord_user_id, goal_type, media_type, current_amount, amount, text, span, created_at, end):
         with self.conn:

@@ -26,8 +26,10 @@ log = logging.getLogger(__name__)
 
 class Set_Goal_Media(commands.Cog):
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot, db_conn=None, store_conn=None) -> None:
         self.bot = bot
+        self.conn = db_conn if db_conn else Set_Goal(_GOAL_DB)
+        self.store = store_conn if store_conn else Store(_DB_NAME)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -109,20 +111,19 @@ class Set_Goal_Media(commands.Cog):
                     return await interaction.response.send_message(ephemeral=True, content='''You can't set goals for the past.''')
 
         goal_type = "MEDIA" if not name else "SPECIFIC"
-        with Set_Goal(_GOAL_DB) as store:
-            bool = store.check_goal_exists(interaction.user.id, goal_type, span, media_type.upper(), name)
-            if bool:
-                return await interaction.response.send_message(ephemeral=True, content='You already set this goal.')
+        bool = self.conn.check_goal_exists(interaction.user.id, goal_type, span, media_type.upper(), name)
+        if bool:
+            return await interaction.response.send_message(ephemeral=True, content='You already set this goal.')
 
-            if len(store.get_goals(interaction.user.id)) > 10:
-                return await interaction.response.send_message(ephemeral=True, content='''You can't set more than 10 goals. To delete a goal do ```/delete_goal``''')
-            if not name:
-                name = ""
-                
-            if goal_type == "SPECIFIC" and media_type == "LISTENING":
-                store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, str(eval(name)).replace("'", "''"), span, created_at, end)
-            else:
-                store.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, name, span, created_at, end)
+        if len(self.conn.get_goals(interaction.user.id)) > 10:
+            return await interaction.response.send_message(ephemeral=True, content='''You can't set more than 10 goals. To delete a goal do ```/delete_goal``''')
+        if not name:
+            name = ""
+            
+        if goal_type == "SPECIFIC" and media_type == "LISTENING":
+            self.conn.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, str(eval(name)).replace("'", "''"), span, created_at, end)
+        else:
+            self.conn.new_goal(interaction.user.id, goal_type, media_type.upper(), 0, amount.value, name, span, created_at, end)
         
         multipliers_path = _MULTIPLIERS
         try:
@@ -137,14 +138,11 @@ class Set_Goal_Media(commands.Cog):
                 codes = json.load(file)
         except FileNotFoundError:
             codes = {}
-        with Store(_DB_NAME) as store_log:
-            logs = store_log.get_logs_by_user(interaction.user.id, media_type, (created_at, end), None)
-        store.close()
+        logs = self.store.get_logs_by_user(interaction.user.id, media_type, (created_at, end), None)
         goal_msgs = []
         for log in logs:
-            with Set_Goal(_GOAL_DB) as store:
-                goal_msg = helpers.update_goals(interaction.user.id, [Goal(interaction.user.id, goal_type, MediaType[media_type.upper()], 0, amount.value, name, span, created_at, end)], Log_constructor(interaction.user.id, log.media_type.value, log.amount, log.title, log.note, log.created_at), store, media_type, MULTIPLIERS, codes, codes_path)
-                goal_msgs.append(goal_msg)
+            goal_msg = helpers.update_goals(interaction, [Goal(interaction.user.id, goal_type, MediaType[media_type.upper()], 0, amount.value, name, span, created_at, end)], Log_constructor(interaction.user.id, log.media_type.value, log.amount, log.title, log.note, log.created_at), self.conn, media_type, MULTIPLIERS, codes, codes_path)
+            goal_msgs.append(goal_msg)
             
         codes_path = _IMMERSION_CODES
         try:
@@ -158,10 +156,18 @@ class Set_Goal_Media(commands.Cog):
         except Exception:
             updated_date = end
         await interaction.response.send_message(ephemeral=True, content=f'''## Set {goal_type} goal as {span} goal\n- {amount.value} {helpers.media_type_format(media_type.upper())} of [{name[1]}]({name[2]}) ({updated_date})\n\nUse ``/goals`` to view your goals for <t:{int(time.mktime((interaction.created_at.replace(hour=0, minute=0, second=0, microsecond=0)).timetuple()))}:D>''', suppress_embeds=True)
+
         if goal_msgs:
             for goal_message in goal_msgs:
-                await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {helpers.random_emoji()}')
-
+                if goal_message == []:
+                    continue
+                else:
+                    await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {helpers.random_emoji()}')
+    
+        if self.store.check_if_in_memory():
+            self.conn.close()
+            self.store.close()
+    
     @set_goal_media.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
 
