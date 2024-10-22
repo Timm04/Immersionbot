@@ -52,30 +52,30 @@ class Backfill(commands.Cog):
         if not amount.value > 0:
             return await interaction.response.send_message(ephemeral=True, content='Only positive numbers allowed.')
 
-        if media_type == "VN" and amount.value > 4000000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 4 million allowed.')
+        if media_type == "VN" and amount.value > 2000000:
+            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 2 million allowed.')
         
-        if media_type == "Manga" and amount.value > 5000:
+        if media_type == "Manga" and amount.value > 3000:
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 3000 allowed.')
         
         if media_type == "Anime" and amount.value > 200:
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 200 allowed.')
         
-        if media_type == "Book" and amount.value > 1000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 1000 allowed.')
+        if media_type == "Book" and amount.value > 500:
+            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 500 allowed.')
 
-        if media_type == "Readtime" and amount.value > 1000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 1000 allowed.')
+        if media_type == "Readtime" and amount.value > 400:
+            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 400 allowed.')
 
         if media_type == "Listening" and amount.value > 1000:
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 1000 allowed.')
 
-        if media_type == "Reading" and amount.value > 4000000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 4 million allowed.')
+        if media_type == "Reading" and amount.value > 2000000:
+            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 2 million allowed.')
         
         if amount.value in [float('inf'), float('-inf')]:
             return await interaction.response.send_message(ephemeral=True, content='No infinities allowed.')
-
+        
         if name != None:
             if len(name) > 150:
                 return await interaction.response.send_message(ephemeral=True, content='Only name/comments under 150 characters allowed.')
