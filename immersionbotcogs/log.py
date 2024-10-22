@@ -110,20 +110,12 @@ class Log(commands.Cog):
         calc_amount, format, msg, immersion_title = helpers.point_message_converter(media_type.upper(), amount.value, name, MULTIPLIERS, codes, codes_path)
         print(first_date, date)
         
-        old_points = self.conn.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
-            
-        
         monthy_points_before_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
-        
         old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
 
         self.conn.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
         
         current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
-
-
-        current_points = self.conn.get_logs_by_user(interaction.user.id, None, (first_date, date), None)
-        
         monthly_points_after_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
 
         if goals:
@@ -158,7 +150,6 @@ class Log(commands.Cog):
                 embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()), inline=True)
             if goals_description:
                 embed.add_field(name='Goals', value='\n'.join(goals_description), inline=False)
-            #embed.add_field(name='Breakdown', value=f'{date.strftime("%B")}: ~~{helpers.millify(sum(i for i, j in list(monthy_points_before_log.values())))}~~ → {helpers.millify(sum(i for i, j in list(current_weighed_points_mediums.values())))}')
             embed.set_footer(text=f'From {interaction.user.display_name} on {add_suffix_to_date(interaction.created_at)}', icon_url=interaction.user.display_avatar.url)
             if immersion_title[3]:
                 url = immersion_title[3]
