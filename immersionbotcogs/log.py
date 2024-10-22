@@ -60,7 +60,7 @@ class Log(commands.Cog):
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 2 million allowed.')
         
         if media_type == "Manga" and amount.value > 3000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 1000 allowed.')
+            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 3000 allowed.')
         
         if media_type == "Anime" and amount.value > 200:
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 200 allowed.')
@@ -72,7 +72,7 @@ class Log(commands.Cog):
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 400 allowed.')
 
         if media_type == "Listening" and amount.value > 1000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 400 allowed.')
+            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 1000 allowed.')
 
         if media_type == "Reading" and amount.value > 2000000:
             return await interaction.response.send_message(ephemeral=True, content='Only numbers under 2 million allowed.')
