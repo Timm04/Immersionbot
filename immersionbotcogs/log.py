@@ -9,7 +9,7 @@ import modals.helpers as helpers
 import logging
 import aiohttp
 import asyncio
-from modals.constants import tmw_id, _DB_NAME, _JP_DB, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS
+from modals.constants import tmw_id, _DB_NAME, _JP_DB, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
 from modals.log_constructor import Log_constructor
 import json
 from datetime import datetime
@@ -221,7 +221,7 @@ class Log(commands.Cog):
 
         elif media_type == 'Listening':
             IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original"
-            API_KEY = "860e1049661dfa0c1e872b32dc331e2c"
+            API_KEY = TMDB_API_KEY
             query = current
             url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
 

@@ -15,7 +15,7 @@ import logging
 from modals.goal import Goal
 from modals.log_constructor import Log_constructor
 from modals.sql import MediaType
-from modals.constants import tmw_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME
+from modals.constants import tmw_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME, TMDB_API_KEY
 import json
 from datetime import datetime
 #############################################################
@@ -207,27 +207,56 @@ class Set_Goal_Media(commands.Cog):
             }
 
             data = {'query': query, 'variables': variables}
+        
+        elif media_type == 'Listening':
+            IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original"
+            API_KEY = TMDB_API_KEY
+            query = current
+            url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
+
+            params = {
+                "api_key": API_KEY,
+                "query": query
+            }
 
         if not url:
             return []
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=data) as resp:
-                log.info(resp.status)
-                json_data = await resp.json()
+            if media_type == 'Listening':
+                async with session.get(url, params=params) as resp:
+                    log.info(f"Status: {resp.status}")
+                    json_data = await resp.json()
 
-                if media_type == 'VN':
-                    suggestions = [(result['title'], result['id']) for result in json_data['results']]
+                    if 'results' in json_data:
+                        suggestions = [
+                            (result.get('name') or result.get('title'), result.get('original_title'), result.get('original_language'), result['id'], result['media_type'], result.get('poster_path'))
+                            for result in json_data['results']
+                        ]
+                    
+                    await asyncio.sleep(0)
+                    
+                    return [
+                        app_commands.Choice(name=f'{org_lan}: {title} ({org_title}) ({media_type})', value=str([id, media_type, f'{poster}']))
+                        for title, org_title, org_lan, id, media_type, poster in suggestions if query.lower() in title.lower()
+                    ]
+            else:
+                async with session.post(url, json=data) as resp:
+                    log.info(resp.status)
+                    json_data = await resp.json()
 
-                elif media_type == 'Anime' or media_type == 'Manga':
-                    suggestions = [(f"{result['title']['romaji']} ({result['title']['native']})", result['id']) for result in json_data['data']['Page']['media']]
+                    if media_type == 'VN' or media_type == "READTIME":
+                        suggestions = [(result['title'], result['id']) for result in json_data['results']]
 
-                await asyncio.sleep(0)
+                    elif media_type == 'Anime' or media_type == 'Manga':
+                        suggestions = [(f"{result['title']['romaji']} ({result['title']['native']})", result['id']) for result in json_data['data']['Page']['media']]
 
-                return [
-                    app_commands.Choice(name=title, value=str(id))
-                    for title, id in suggestions if current.lower() in title.lower()
-                ]
+                    await asyncio.sleep(0)
+
+                    return [
+                        app_commands.Choice(name=title, value=str(id))
+                        for title, org_title, org_lan, id in suggestions if current.lower() in title.lower()
+                    ]
     
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Set_Goal_Media(bot))
