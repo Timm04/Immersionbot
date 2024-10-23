@@ -1,9 +1,15 @@
+import os
+
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+guild_id = os.getenv("SERVER_ID")
+TOKEN = os.getenv("TOKEN")
+ALLOWED_CHANNELS = [796876740445208606] # Channel IDs where certain features like logging are allowed
+
 _DB_NAME = 'prod.db'
 _JP_DB = "dbs/japanese.db"
 _GOAL_DB = "dbs/goals.db"
 _IMMERSION_CODES = "jsons/immersion_codes.json"
 _MULTIPLIERS = "jsons/multipliers.json"
-TMDB_API_KEY = "API KEY HERE"
 
 ACHIEVEMENTS = {
     "VN": [1, 50_000, 100_000, 500_000, 1_000_000, 2_000_000, 4_000_000, 10_000_000, float('inf')],
@@ -63,8 +69,6 @@ EMOJI_TABLE = {
     "KimoiHuh": 931588710473031761,
 }
 
-ALLOWED_CHANNELS = [796876740445208606]
-tmw_id = 947813835715256390
 TIMEFRAMES = ["WEEK, MONTH, YEAR, All"]
 
 JACK_FILTER = ["imouto", "sister", "いもうと", "妹", "sis", "sisters", "お兄ちゃん", "兄", "ブラコン", "きょうだい"]

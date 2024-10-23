@@ -4,7 +4,7 @@ from modals.sql import Set_jp
 import modals.helpers as helpers
 import re
 from discord import app_commands
-from modals.constants import ALLOWED_CHANNELS, tmw_id, _JP_DB
+from modals.constants import ALLOWED_CHANNELS, guild_id, _JP_DB
 from collections import deque
 
 jp_REGEX = re.compile(r"[一-鿿ぁ-ゔァ-ヴーａ-ｚＡ-Ｚ０-９々〆〤ヶ]+|[ぁ-ゔ]+|[ァ-ヴー]+|[々〆〤ヶ]+[]+] +/u")
@@ -29,7 +29,7 @@ class Japanese_tracker(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
         
     @commands.Cog.listener()
     async def on_message_delete(self, message):

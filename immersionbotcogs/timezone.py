@@ -7,7 +7,7 @@ from discord.app_commands import Choice
 from typing import List
 from discord.ui import Select, Button
 from discord.ui.item import Item
-from modals.constants import tmw_id, timezones
+from modals.constants import guild_id, timezones
 
 from typing import TYPE_CHECKING, Any, Optional, Sequence, NamedTuple
 #############################################################
@@ -218,7 +218,7 @@ class Setup(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
 
     @app_commands.command(name='setup', description=f'Setup your immersion experience.')
     @app_commands.checks.has_role("Moderator")

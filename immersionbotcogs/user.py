@@ -16,7 +16,7 @@ from modals.sql import Store, Set_jp
 import os
 
 import modals.helpers as helpers
-from modals.constants import _DB_NAME, TIMEFRAMES, _JP_DB, tmw_id, _MULTIPLIERS
+from modals.constants import _DB_NAME, TIMEFRAMES, _JP_DB, guild_id, _MULTIPLIERS
 import asyncio
 import json
 
@@ -42,7 +42,7 @@ class User(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
     
     async def generate_trend_graph(self, timeframe, interaction, logs, user, MULTIPLIERS):
 

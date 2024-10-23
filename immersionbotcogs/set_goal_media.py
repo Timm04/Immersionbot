@@ -15,7 +15,7 @@ import logging
 from modals.goal import Goal
 from modals.log_constructor import Log_constructor
 from modals.sql import MediaType
-from modals.constants import tmw_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME, TMDB_API_KEY
+from modals.constants import guild_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME, TMDB_API_KEY
 import json
 from datetime import datetime
 #############################################################
@@ -33,7 +33,7 @@ class Set_Goal_Media(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
     
     @app_commands.command(name='set_goal_media', description=f'Set daily immersion log goals')
     @app_commands.describe(amount='''Episode to watch, characters or pages to read. Time to read/listen in [hr:min] or [min] for example '1.30' or '25'.''')

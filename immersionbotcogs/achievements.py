@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from modals.sql import Store
-from modals.constants import _MULTIPLIERS, tmw_id, _DB_NAME
+from modals.constants import _MULTIPLIERS, guild_id, _DB_NAME
 import modals.helpers as helpers
 import json
 
@@ -13,7 +13,7 @@ class Achievements(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
                 
     @app_commands.command(name='achievements', description=f'Shows your immersion milestones.')
     async def achievements(self, interaction: discord.Interaction):
