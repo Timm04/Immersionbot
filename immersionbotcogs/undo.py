@@ -5,8 +5,8 @@ from datetime import timedelta
 from modals.sql import Store, Set_Goal
 from typing import Optional
 import json
-from modals.constants import _DB_NAME, TIMEFRAMES, tmw_id, _GOAL_DB, _MULTIPLIERS, _IMMERSION_CODES
-from modals.constants import tmw_id, _DB_NAME
+from modals.constants import _DB_NAME, TIMEFRAMES, guild_id, _GOAL_DB, _MULTIPLIERS, _IMMERSION_CODES
+from modals.constants import guild_id, _DB_NAME
 from modals.log import Log
 from modals import helpers
 from discord.ui import Select
@@ -75,7 +75,7 @@ class Undo(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
                 
     @app_commands.command(name='undo_log', description=f'Undo your latest immersion log.')
     @app_commands.describe(timeframe='''DEFAULT=MONTH; Week, Month, Year, All, [year-month-day] or [year-month-day-year-month-day]''')

@@ -10,7 +10,7 @@ import asyncio
 import json
 import modals.helpers as helpers
 from datetime import date as timedelta
-from modals.constants import TIMEFRAMES, _DB_NAME, tmw_id, _IMMERSION_CODES
+from modals.constants import TIMEFRAMES, _DB_NAME, guild_id, _IMMERSION_CODES
 
 class Export(commands.Cog):
 
@@ -19,7 +19,7 @@ class Export(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
                 
     @app_commands.command(name='export', description=f'Export your immersion logs.')
     @app_commands.describe(timeframe='''DEFAULT=MONTH; Week, Month, Year, All, [year-month-day] or [year-month-day-year-month-day]''')

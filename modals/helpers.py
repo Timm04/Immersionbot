@@ -17,16 +17,6 @@ from modals.sql import Debug
 
 from modals.constants import MESSAGE_FORMATS
 
-def check_if_in_memory(conn):
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA database_list;")
-    databases = cursor.fetchall()
-
-    if databases and databases[0][2] == ':memory:':
-        return True
-    else:
-        return False
-
 def check_maintenance():
     with Debug("dbs/debug.db") as debug:
         m = debug.check_maintenance()

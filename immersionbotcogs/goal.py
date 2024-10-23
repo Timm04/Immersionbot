@@ -6,7 +6,7 @@ from discord import app_commands
 from modals.sql import Set_Goal, Store
 import time
 import modals.helpers as helpers
-from modals.constants import tmw_id, _GOAL_DB, _IMMERSION_CODES
+from modals.constants import guild_id, _GOAL_DB, _IMMERSION_CODES
 import json
 from datetime import datetime
 
@@ -17,7 +17,7 @@ class Goal(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
 
     @app_commands.command(name='goals', description=f'See your immersion log goal overview.')
     async def goals(self, interaction: discord.Interaction):

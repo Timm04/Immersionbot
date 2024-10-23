@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.app_commands import Choice
 from modals.sql import Store, Set_jp
 import modals.helpers as helpers
-from modals.constants import _DB_NAME, TIMEFRAMES, tmw_id, _MULTIPLIERS, _JP_DB
+from modals.constants import _DB_NAME, TIMEFRAMES, guild_id, _MULTIPLIERS, _JP_DB
 import json
 
 class Leaderboard(commands.Cog):
@@ -16,7 +16,7 @@ class Leaderboard(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
         
     @app_commands.command(name='leaderboard', description=f'Leaderboard of immersion.')
     @app_commands.choices(media_type = [Choice(name="Visual Novels", value="VN"), Choice(name="Manga", value="MANGA"), Choice(name="Anime", value="ANIME"), Choice(name="Book", value="BOOK"), Choice(name="Readtime", value="READTIME"), Choice(name="Listening", value="LISTENING"), Choice(name="Reading", value="READING"), Choice(name="Output", value="OUTPUT")])

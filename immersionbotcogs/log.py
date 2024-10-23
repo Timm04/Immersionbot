@@ -9,7 +9,7 @@ import modals.helpers as helpers
 import logging
 import aiohttp
 import asyncio
-from modals.constants import tmw_id, _DB_NAME, _JP_DB, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
+from modals.constants import guild_id, _DB_NAME, _JP_DB, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
 from modals.log_constructor import Log_constructor
 import json
 from datetime import datetime
@@ -30,7 +30,7 @@ class Log(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
 
     @app_commands.command(name='log', description=f'Log your immersion')
     @app_commands.describe(amount='''Episodes watched, characters or pages read. Time read/listened in [hr:min:sec], [min:sec], [min] for example '1.30' or '25'.''')
@@ -113,7 +113,7 @@ class Log(commands.Cog):
         monthy_points_before_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
         old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
 
-        self.conn.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
+        self.conn.new_log(guild_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
         
         current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
         monthly_points_after_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))

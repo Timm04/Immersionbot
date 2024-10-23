@@ -11,7 +11,7 @@ import logging
 import aiohttp
 import random
 import asyncio
-from modals.constants import tmw_id, _DB_NAME, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
+from modals.constants import guild_id, _DB_NAME, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
 import json
 #############################################################
 
@@ -26,7 +26,7 @@ class Backfill(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
 
     @app_commands.command(name='backfill', description=f'Backfill your immersion')
     @app_commands.describe(amount='''Episodes watched, characters or pages read. Time read/listened in [hr:min] or [min] for example '1.30' or '25'.''')
@@ -115,7 +115,7 @@ class Backfill(commands.Cog):
             old_weighed_points_mediums = helpers.multiplied_points(old_points, MULTIPLIERS)
             old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store, MULTIPLIERS)
             
-            store.new_log(tmw_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
+            store.new_log(guild_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
             
             current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), store, MULTIPLIERS)
         

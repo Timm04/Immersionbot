@@ -12,7 +12,7 @@ from modals.goal import Goal
 from modals.log_constructor import Log_constructor
 from modals.sql import MediaType
 import logging
-from modals.constants import tmw_id, _GOAL_DB, _DB_NAME, _MULTIPLIERS, _IMMERSION_CODES
+from modals.constants import guild_id, _GOAL_DB, _DB_NAME, _MULTIPLIERS, _IMMERSION_CODES
 import json
 from datetime import datetime
 #############################################################
@@ -30,7 +30,7 @@ class Set_Goal_Points(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
     
     @app_commands.command(name='set_goal_points', description=f'Set daily immersion log goals')
     @app_commands.describe(amount='''Points to log.''')
