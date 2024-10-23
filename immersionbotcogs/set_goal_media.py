@@ -110,6 +110,10 @@ class Set_Goal_Media(commands.Cog):
                 if end < created_at:
                     return await interaction.response.send_message(ephemeral=True, content='''You can't set goals for the past.''')
 
+        if name:
+            if len(name) > 150:
+                return await interaction.response.send_message(ephemeral=True, content='Only names under 150 characters allowed.')
+
         goal_type = "MEDIA" if not name else "SPECIFIC"
         bool = self.conn.check_goal_exists(interaction.user.id, goal_type, span, media_type.upper(), name)
         if bool:

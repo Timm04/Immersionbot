@@ -81,12 +81,12 @@ class Log(commands.Cog):
             return await interaction.response.send_message(ephemeral=True, content='No infinities allowed.')
 
         #max comment/name length
-        if name != None:
+        if name:
             if len(name) > 150:
-                return await interaction.response.send_message(ephemeral=True, content='Only name/comments under 150 characters allowed.')
-        elif comment != None:
+                return await interaction.response.send_message(ephemeral=True, content='Only names under 150 characters allowed.')
+        if comment:
             if len(comment) > 150:
-                return await interaction.response.send_message(ephemeral=True, content='Only name/comments under 150 characters allowed.')
+                return await interaction.response.send_message(ephemeral=True, content='Only comments under 150 characters allowed.')
         
         await interaction.response.defer()
 
