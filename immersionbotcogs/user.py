@@ -113,7 +113,7 @@ class User(commands.Cog):
     
     async def create_embed(self, timeframe, interaction, weighed_points_mediums, logs, user, store, MULTIPLIERS):
         embed = discord.Embed(title=f'{timeframe} Immersion Overview')
-        embed.add_field(name='**User**', value=user.display_name)
+        embed.add_field(name='**User**', value=f'<@!{user.id}>')
         embed.add_field(name='**Timeframe**', value=timeframe)
         embed.add_field(name='**Points**', value=helpers.millify(sum(i for i, j in list(weighed_points_mediums.values()))))
         try:

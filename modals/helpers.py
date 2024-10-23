@@ -57,17 +57,9 @@ async def get_leaderboard(bot, leaderboard, command_user, media_type, title, MUL
     user_rank = [rank for uid, total, rank in leaderboard if uid == command_user.id]
     user_rank = user_rank and user_rank[0]
 
-    async def get_user(id):
-        user = bot.get_user(id)
-        return user or await bot.fetch_user(id)
-
     async def leaderboard_row(user_id, points, rank):
         ellipsis = '...\n' if user_rank and rank == (user_rank-1) and rank > 21 else ''
-        try:
-            user = await get_user(user_id)
-            display_name = user.display_name if user else 'Unknown'
-        except Exception:
-            display_name = 'Unknown'
+        display_name = f'<@!{user_id}>'
         if media_type == "OUTPUT":
             amount = points
         elif media_type and media_type != "OUTPUT":
