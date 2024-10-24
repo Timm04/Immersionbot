@@ -149,12 +149,18 @@ class Store:
     def close(self):
         self.conn.close()
 
-    def fetch(self, query):
-        # print(query)
+    def fetch(self, query, params=None):
         cursor = self.conn.cursor()
-        cursor.execute(query)
-        result = cursor.fetchall()
-        cursor.close()
+        try:
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            result = cursor.fetchall()
+        except Exception as e:
+            result = []
+        finally:
+            cursor.close()
         return result
 
     def new_log(
@@ -241,29 +247,20 @@ class Store:
             return self.fetch(query)
     
     def get_logs_by_user_with_row_id(self, discord_user_id, media_type, timeframe, name):
-        #refractor later
-        if media_type == None and timeframe == None and name == None:
-            where_clause = f"discord_user_id={discord_user_id}"
-        if media_type and media_type != None and timeframe  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif not media_type and media_type != None and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe == None  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
+        where_clause = f"discord_user_id = ?"
+        params = [discord_user_id]
+
+        if media_type:
+            where_clause += " AND media_type = ?"
+            params.append(media_type.upper())
+
+        if timeframe:
+            where_clause += " AND created_at BETWEEN ? AND ?"
+            params.extend(timeframe)
+            
+        if name:
+            where_clause += " AND title = ?"
+            params.append(name)
             
         query = f"""
         SELECT rowid, * FROM logs
@@ -275,28 +272,20 @@ class Store:
     
     def get_logs_by_user(self, discord_user_id, media_type, timeframe, name):
         #refractor later
-        if media_type == None and timeframe == None and name == None:
-            where_clause = f"discord_user_id={discord_user_id}"
-        if media_type and media_type != None and timeframe  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif not media_type and media_type != None and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe == None  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
+        where_clause = f"discord_user_id = ?"
+        params = [discord_user_id]
+
+        if media_type:
+            where_clause += " AND media_type = ?"
+            params.append(media_type.upper())
+
+        if timeframe:
+            where_clause += " AND created_at BETWEEN ? AND ?"
+            params.extend(timeframe)
+            
+        if name:
+            where_clause += " AND title = ?"
+            params.append(name)
             
         query = f"""
         SELECT * FROM logs
@@ -304,7 +293,7 @@ class Store:
         ORDER BY created_at DESC;
         """
         
-        return self.fetch(query)
+        return self.fetch(query, params)
     
     def get_that_log(self, discord_user_id):
         where_clause = f'''discord_user_id={discord_user_id}'''
