@@ -2,27 +2,18 @@ import discord
 from discord.ext import commands
 from datetime import timedelta
 from datetime import timedelta
-from typing import Optional
 from discord import app_commands
 from discord.app_commands import Choice
-from modals.sql import Set_Goal, Store
+from typing import List, Dict, Tuple, Optional
 import time
-import modals.helpers as helpers
-import aiohttp
-from typing import List
-import asyncio
-import logging
-from modals.goal import Goal
-from modals.log_constructor import Log_constructor
-from modals.sql import MediaType
-from modals.constants import guild_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME, TMDB_API_KEY
 import json
-from datetime import datetime
-#############################################################
 
-log = logging.getLogger(__name__)
-
-#############################################################
+from modals.goal import Goal
+import modals.helpers as helpers
+from modals.log_constructor import Log_constructor
+from modals.sql import MediaType, Set_Goal, Store
+from modals.constants import guild_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME, TMDB_API_KEY
+from modals.api_requests import vndb_autocomplete, anilist_autocomplete, tmdb_autocomplete
 
 class Set_Goal_Media(commands.Cog):
 
@@ -37,7 +28,7 @@ class Set_Goal_Media(commands.Cog):
     
     @app_commands.command(name='set_goal_media', description=f'Set daily immersion log goals')
     @app_commands.describe(amount='''Episode to watch, characters or pages to read. Time to read/listen in [hr:min] or [min] for example '1.30' or '25'.''')
-    @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="Manga"), Choice(name="Anime", value="Anime"), Choice(name="Book", value="Book"), Choice(name="Readtime", value="Readtime"), Choice(name="Listening", value="Listening"), Choice(name="Reading", value="Reading")])
+    @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="MANGA"), Choice(name="Anime", value="ANIME"), Choice(name="Book", value="BOOK"), Choice(name="Readtime", value="READTIME"), Choice(name="Listening", value="LISTENING"), Choice(name="Reading", value="READING")])
     @app_commands.describe(name='''You can use vndb IDs for VN and Anilist codes for Anime, Manga and Light Novels''')
     @app_commands.describe(span='''[Day = Till the end of today], [Daily = Everyday], [Date = Till a certain date ([year-month-day] Example: '2022-12-29')]''')
     async def set_goal_media(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], span: str):
@@ -51,32 +42,25 @@ class Set_Goal_Media(commands.Cog):
             return await interaction.response.send_message(ephemeral=True, content='Enter a valid number.')
         
         #introducing upperbound for amount to log for each media_type
-        if not amount.value > 0:
-            return await interaction.response.send_message(ephemeral=True, content='Only positive numbers allowed.')
-
-        if media_type == "VN" and amount.value > 4000000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 4 million allowed.')
+        def is_valid_amount(media_type, amount):
+            limits = {
+                "VN": 4000000,
+                "Manga": 10000,
+                "Anime": 20000,
+                "Book": 10000,
+                "Readtime": 40000,
+                "Listening": 40000,
+                "Reading": 4000000,
+            }
+            if not (0 < amount <= limits.get(media_type, float('inf'))):
+                return False, f"Only numbers under {limits[media_type]} allowed."
+            if amount in [float('inf'), float('-inf')]:
+                return False, "No infinities allowed."
+            return True, None
         
-        if media_type == "Manga" and amount.value > 10000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 10000 allowed.')
-        
-        if media_type == "Anime" and amount.value > 20000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 20000 allowed.')
-        
-        if media_type == "Book" and amount.value > 10000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 10000 allowed.')
-
-        if media_type == "Readtime" and amount.value > 40000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 40000 allowed.')
-
-        if media_type == "Listening" and amount.value > 40000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 40000 allowed.')
-
-        if media_type == "Reading" and amount.value > 4000000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 4 million allowed.')
-        
-        if amount.value in [float('inf'), float('-inf')]:
-            return await interaction.response.send_message(ephemeral=True, content='No infinities allowed.')
+        is_valid_amount, erorr_message = is_valid_amount(media_type, amount.value)
+        if not is_valid_amount:
+            return await interaction.response.send_message(ephemeral=True, content=erorr_message)
         
         if span.upper() == "DAY":
             span = "DAY"
@@ -142,18 +126,13 @@ class Set_Goal_Media(commands.Cog):
                 codes = json.load(file)
         except FileNotFoundError:
             codes = {}
+            
         logs = self.store.get_logs_by_user(interaction.user.id, media_type, (created_at, end), None)
         goal_msgs = []
         for log in logs:
             goal_msg = helpers.update_goals(interaction, [Goal(interaction.user.id, goal_type, MediaType[media_type.upper()], 0, amount.value, name, span, created_at, end)], Log_constructor(interaction.user.id, log.media_type.value, log.amount, log.title, log.note, log.created_at), self.conn, media_type, MULTIPLIERS, codes, codes_path)
             goal_msgs.append(goal_msg)
             
-        codes_path = _IMMERSION_CODES
-        try:
-            with open(codes_path, "r") as file:
-                codes = json.load(file)
-        except FileNotFoundError:
-            codes = {}
         name = helpers.get_name_of_immersion(media_type, name, codes, _IMMERSION_CODES)
         try:
             updated_date = f'<t:{int(end.timestamp())}:R>'
@@ -175,92 +154,39 @@ class Set_Goal_Media(commands.Cog):
     @set_goal_media.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
 
-        await interaction.response.defer()
+        cache: Dict[str, Tuple[List[app_commands.Choice], float]] = {}
+        CACHE_EXPIRY_TIME = 10 * 60
+
+        def get_cached_results(query: str):
+            if query in cache:
+                cached_data, timestamp = cache[query]
+                if time.time() - timestamp < CACHE_EXPIRY_TIME:
+                    return cached_data
+                else:
+                    del cache[query]
+            return None
+
+        def update_cache(query: str, data: List[app_commands.Choice]):
+            cache[query] = (data, time.time())
+
+        cached_result = get_cached_results(current)
+        if cached_result:
+            return cached_result
+
         media_type = interaction.namespace['media_type']
         suggestions = []
-        url = ''
 
-        if media_type == 'VN':
-            url = 'https://api.vndb.org/kana/vn'
-            data = {'filters': ['search', '=', f'{current}'], 'fields': 'title, alttitle'} # default no. of results is 10
+        if media_type == 'VN' or media_type == "READTIME":
+            suggestions = await vndb_autocomplete(current)
         
-        elif media_type == 'Anime' or media_type == 'Manga':
-            url = 'https://graphql.anilist.co'
-            query = f'''
-            query ($page: Int, $perPage: Int, $title: String) {{
-                Page(page: $page, perPage: $perPage) {{
-                    pageInfo {{
-                        total
-                        perPage
-                    }}
-                    media (search: $title, type: {media_type.upper()}) {{
-                        id
-                        title {{
-                            romaji
-                            native
-                        }}
-                    }}
-                }}
-            }}
-            '''
+        elif media_type == 'ANIME' or media_type == 'MANGA':
+            suggestions = await anilist_autocomplete(current, media_type)
 
-            variables = {
-                'title': current,
-                'page': 1,
-                'perPage': 10
-            }
+        elif media_type == 'LISTENING':
+            suggestions = await tmdb_autocomplete(current, TMDB_API_KEY)
 
-            data = {'query': query, 'variables': variables}
-        
-        elif media_type == 'Listening':
-            IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original"
-            API_KEY = TMDB_API_KEY
-            query = current
-            url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
-
-            params = {
-                "api_key": API_KEY,
-                "query": query
-            }
-
-        if not url:
-            return []
-
-        async with aiohttp.ClientSession() as session:
-            if media_type == 'Listening':
-                async with session.get(url, params=params) as resp:
-                    log.info(f"Status: {resp.status}")
-                    json_data = await resp.json()
-
-                    if 'results' in json_data:
-                        suggestions = [
-                            (result.get('name') or result.get('title'), result.get('original_title'), result.get('original_language'), result['id'], result['media_type'], result.get('poster_path'))
-                            for result in json_data['results']
-                        ]
-                    
-                    await asyncio.sleep(0)
-                    
-                    return [
-                        app_commands.Choice(name=f'{org_lan}: {title} ({org_title}) ({media_type})', value=str([id, media_type, f'{poster}']))
-                        for title, org_title, org_lan, id, media_type, poster in suggestions if query.lower() in title.lower()
-                    ]
-            else:
-                async with session.post(url, json=data) as resp:
-                    log.info(resp.status)
-                    json_data = await resp.json()
-
-                    if media_type == 'VN' or media_type == "READTIME":
-                        suggestions = [(result['title'], result['id']) for result in json_data['results']]
-
-                    elif media_type == 'Anime' or media_type == 'Manga':
-                        suggestions = [(f"{result['title']['romaji']} ({result['title']['native']})", result['id']) for result in json_data['data']['Page']['media']]
-
-                    await asyncio.sleep(0)
-
-                    return [
-                        app_commands.Choice(name=title, value=str(id))
-                        for title, org_title, org_lan, id in suggestions if current.lower() in title.lower()
-                    ]
+        update_cache(current, suggestions)
+        return suggestions
     
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Set_Goal_Media(bot))

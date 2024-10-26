@@ -1,13 +1,16 @@
 import sqlite3
 from collections import namedtuple
 from enum import Enum
-from modals.maintenance import Maintenance as m
-
 
 class SqliteEnum(Enum):
     def __conform__(self, protocol):
         if protocol is sqlite3.PrepareProtocol:
             return self.name
+        
+class Maintenance():
+    def __init__(self, bool, msg) -> None:
+        self.bool = bool
+        self.maintenance_msg = msg
 
 class MediaType(SqliteEnum):
     BOOK = 'BOOK'
@@ -116,7 +119,8 @@ class Debug:
         else:
             message = ""
         cursor.close()
-        return m(bool, message)
+        
+        return Maintenance(bool, message)
 
 class Store:
     def __init__(self, db_name_or_conn):

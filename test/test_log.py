@@ -92,8 +92,8 @@ class TestLogCommand:
         self.interaction.response.send_message.assert_not_called()
 
         assert self.interaction.edit_original_response.call_count == 1
-        assert self.interaction.channel.send.call_count == 1
         embed = self.interaction.edit_original_response.call_args[1]['embed']
+        message = self.interaction.edit_original_response.message
         assert embed.title.startswith(f'Logged 1 ep of {media_type}')
         assert embed.description == f'''Source: N/A\n\n{format_message(media_type, self.MULTIPLIERS[media_type], self.MULTIPLIERS)}\n{self.interaction.created_at.strftime("%B")}: ~~0~~ → {round(self.MULTIPLIERS[media_type],4 )}'''
         streak_field = next(field for field in embed.fields if field.name == 'Streak')
@@ -101,8 +101,7 @@ class TestLogCommand:
         achievement_field = next(field for field in embed.fields if field.name == 'Next Achievement')
         assert achievement_field.value == f'{media_type} {ACHIEVEMENT_RANKS[1]} {ACHIEVEMENT_EMOJIS[1]} in 12 eps'
         
-        message = self.interaction.channel.send.call_args[1]['content']
-        assert message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 eps!!!')
+        assert await message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 eps!!!')
         
     # @pytest.mark.asyncio
     # async def test_log_vn_and_get_achievement(self, setup):
@@ -380,8 +379,8 @@ class TestLogCommand:
         achievement_field = next(field for field in embed.fields if field.name == 'Next Achievement')
         assert achievement_field.value == f'{media_type} {ACHIEVEMENT_RANKS[1]} {ACHIEVEMENT_EMOJIS[1]} in 10 eps'
         
-        message = self.interaction.channel.send.call_args[1]['content']
-        assert message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 eps!!!')
+        message = self.interaction.edit_original_response.message
+        assert await message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 eps!!!')
         assert embed.thumbnail.url == 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx5114-Dilr312jctdJ.jpg'
         
     @pytest.mark.asyncio
@@ -402,8 +401,8 @@ class TestLogCommand:
         achievement_field = next(field for field in embed.fields if field.name == 'Next Achievement')
         assert achievement_field.value == f'{media_type} {ACHIEVEMENT_RANKS[1]} {ACHIEVEMENT_EMOJIS[1]} in 49998 chars'
         
-        message = self.interaction.channel.send.call_args[1]['content']
-        assert message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 chars!!!')
+        message = self.interaction.edit_original_response.message
+        assert await message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 chars!!!')
         assert embed.thumbnail.url == 'https://t.vndb.org/cv.t/98/79698.jpg'
         
     @pytest.mark.asyncio
@@ -424,8 +423,8 @@ class TestLogCommand:
         achievement_field = next(field for field in embed.fields if field.name == 'Next Achievement')
         assert achievement_field.value == f'{media_type} {ACHIEVEMENT_RANKS[1]} {ACHIEVEMENT_EMOJIS[1]} in 248 mins'
         
-        message = self.interaction.channel.send.call_args[1]['content']
-        assert message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 mins!!!')
+        message = self.interaction.edit_original_response.message
+        assert await message.startswith(f'{self.interaction.user.mention} congrats on unlocking the achievement {media_type} {ACHIEVEMENT_RANKS[0]} {ACHIEVEMENT_EMOJIS[0]} 1 mins!!!')
         assert embed.thumbnail.url == 'https://image.tmdb.org/t/p/original/o5hxzWnfIvBioeuLd8Io1Sg3EwG.jpg'
         
     @pytest.mark.asyncio

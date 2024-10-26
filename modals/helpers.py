@@ -12,16 +12,11 @@ import random
 import tmdbv3api
 import requests
 from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, ACHIEVEMENT_EMOJIS, ACHIEVEMENT_IDS, EMOJI_TABLE, JACK_FILTER, TMDB_API_KEY
-
+import asyncio
+from modals.goal import Goal
+from modals.constants import MESSAGE_FORMATS
 from modals.sql import Debug
 
-from modals.constants import MESSAGE_FORMATS
-
-def check_maintenance():
-    with Debug("dbs/debug.db") as debug:
-        m = debug.check_maintenance()
-        msg = m.maintenance_msg
-        return m.bool, msg
 
 class SqliteEnum(Enum):
     def __conform__(self, protocol):
@@ -44,6 +39,12 @@ class Span(Enum):
     DATE = "DATE"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
+        
+def check_maintenance():
+    with Debug("dbs/debug.db") as debug:
+        data = debug.check_maintenance()
+        maintenance_message = data.maintenance_msg
+        return data.bool, maintenance_message
 
 def get_title(title, media_type):
     if media_type:
@@ -51,15 +52,21 @@ def get_title(title, media_type):
     else:
         return f'''{title} Leaderboard (pts)'''
 
-import asyncio
-
 async def get_leaderboard(bot, leaderboard, command_user, media_type, title, MULTIPLIERS):
     user_rank = [rank for uid, total, rank in leaderboard if uid == command_user.id]
     user_rank = user_rank and user_rank[0]
+    
+    async def get_user(id):
+        user = bot.get_user(id)
+        return user or await bot.fetch_user(id)
 
     async def leaderboard_row(user_id, points, rank):
         ellipsis = '...\n' if user_rank and rank == (user_rank-1) and rank > 21 else ''
-        display_name = f'<@!{user_id}>'
+        try:
+            user = await get_user(user_id)
+            display_name = user.display_name if user else 'Unknown'
+        except Exception:
+            display_name = 'Unknown'
         if media_type == "OUTPUT":
             amount = points
         elif media_type and media_type != "OUTPUT":
@@ -166,82 +173,6 @@ def span_to_text(span, end_date):
             return 'untill end of Month'
         else:
             return "untill " + Span_to_datetime(Span("MONTHLY"), [end_date])[1].strftime("{0} %b %Y").format(ordinal(Span_to_datetime(Span("MONTHLY"), [end_date])[1].day)) + " [MONTHLY]"
-
-
-
-# def goal_algo(dict, log_bool, store, interaction, media_type):
-#     goals_description = []
-#     goal_message = []
-#     for goals_row in dict["goals"]:
-#         until_text = span_to_text(goals_row.span, goals_row.end)
-#         if bool(dict['logs']):
-#             points = []
-#             for log in dict['logs']:
-#                 if goals_row.goal_type == "SPECIFIC" and goals_row.text == log.title and goals_row.media_type == log.media_type:
-#                     points.append(log.amount)
-#                 elif goals_row.media_type == log.media_type:
-#                     if goals_row.goal_type == "MEDIA":
-#                         points.append(log.amount)
-#                     if goals_row.goal_type == "POINTS":
-#                         points.append(_to_amount(log.media_type.value, log.amount))
-#                 elif goals_row.media_type.value == "ANYTHING":
-#                     points.append(_to_amount(log.media_type.value, log.amount))
-#             points = sum(points)
-#             if points >= goals_row.amount:
-#                 goals_description.append(f"""- ~~{round(points, 2)}/{goals_row.amount} {media_type_format(goals_row.media_type.value)} {get_name_of_immersion(goals_row.media_type.value, goals_row.text)[2]} ({until_text})~~""")
-#                 if log_bool and not store.goal_already_completed_before(interaction.user.id, goals_row.span, goals_row.media_type, goals_row.text):
-#                         goal_message.append((interaction.user.mention, media_type_grammer(media_type.upper()), goals_row.amount, media_type_format(media_type.upper()), get_name_of_immersion(goals_row.media_type.value, goals_row.text)[1], random_emoji()))
-#                         store.goal_completed(interaction.user.id, goals_row.span, goals_row.amount, goals_row.media_type, goals_row.text)
-#             else:
-#                 goals_description.append(f"""- {round(points, 2)}/{goals_row.amount} {media_type_format(goals_row.media_type.value)} {get_name_of_immersion(goals_row.media_type.value, goals_row.text)[2]} ({until_text})""")
-#         else:
-#             goals_description.append(f"""- 0/{goals_row.amount} {media_type_format(goals_row.media_type.value)} {get_name_of_immersion(goals_row.media_type.value, goals_row.text)[2]} ({until_text})""")
-
-#     return goals_description, goal_message
-
-# def get_goal_description(logs, goals, log_bool, store, interaction, media_type):
-#     goals_description = []
-#     goal_message = []
-#     for goals_row in goals:
-#         until_text = span_to_text(goals_row.span, goals_row.end)
-#         if bool(logs):
-#             points = []
-#             for log in logs:
-#                 if goals_row.goal_type == "SPECIFIC" and goals_row.text == log.title and goals_row.media_type == log.media_type:
-#                     points.append(log.amount)
-#                 elif goals_row.media_type == log.media_type:
-#                     if goals_row.goal_type == "MEDIA":
-#                         points.append(log.amount)
-#                     if goals_row.goal_type == "POINTS":
-#                         points.append(_to_amount(log.media_type.value, log.amount))
-#                 elif goals_row.media_type.value == "ANYTHING":
-#                     points.append(_to_amount(log.media_type.value, log.amount))
-#             points = sum(points)
-#             if points >= goals_row.amount:
-#                 goals_description.append(f"""- ~~{round(points, 2)}/{goals_row.amount} {media_type_format(goals_row.media_type.value)} {get_name_of_immersion(goals_row.media_type.value, goals_row.text)[2]} ({until_text})~~""")
-#                 if log_bool and not store.goal_already_completed_before(interaction.user.id, goals_row.span, goals_row.media_type, goals_row.text):
-#                         goal_message.append((interaction.user.mention, media_type_grammer(media_type.upper()), goals_row.amount, media_type_format(media_type.upper()), get_name_of_immersion(goals_row.media_type.value, goals_row.text)[1], random_emoji()))
-#                         store.goal_completed(interaction.user.id, goals_row.span, goals_row.amount, goals_row.media_type, goals_row.text)
-#             else:
-#                 goals_description.append(f"""- {round(points, 2)}/{goals_row.amount} {media_type_format(goals_row.media_type.value)} {get_name_of_immersion(goals_row.media_type.value, goals_row.text)[2]} ({until_text})""")
-#         else:
-#             goals_description.append(f"""- 0/{goals_row.amount} {media_type_format(goals_row.media_type.value)} {get_name_of_immersion(goals_row.media_type.value, goals_row.text)[2]} ({until_text})""")
-
-#     goals_description = '\n'.join(goals_description)
-
-#     return goals_description, goal_message
-    # goals_description = []
-    # goal_message = []
-
-    # for span in Span:
-    #     description, message = goal_algo(dict=dicts[span], log_bool=log_bool, store=store, interaction=interaction, media_type=media_type)
-    #     goals_description += description
-    #     goal_message  += message
-
-    # goals_description  = '\n'.join(goals_description)
-
-    # return goals_description, goal_message
-from modals.goal import Goal
 
 def undo_goal(goals, log, store_goal, MULTIPLIERS):
     for goals_row in goals:
@@ -625,14 +556,11 @@ def media_type_format_grammar(media_type, amount):
 def format_message(media_type, points, MULTIPLIERS):
     """Formats the message using the media_type and conversion."""
     conversion = calculate_conversion(media_type, MULTIPLIERS)
-    points = point_rounding(points)
+    points = round(points, 4)
 
     if media_type in MESSAGE_FORMATS:
         return MESSAGE_FORMATS[media_type].format(conversion=conversion, points=points)
     return ""
-
-def point_rounding(amount):
-    return round(amount, 4)
 
 def point_message_converter(media_type, amount, name, MULTIPLIERS, codes, file_path):
     weighed_amount = _to_amount(media_type, amount, MULTIPLIERS)
@@ -672,6 +600,11 @@ def start_end_tf(now, timeframe):
 
     return now, start, end, title
 
+def add_suffix_to_date(date):
+    day = date.day
+    suffix = 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+    return f"{date.strftime('%b')} {day}{suffix} {date.strftime('%Y')}"
+
 def make_ordinal(n):
     '''
     Convert an integer into its ordinal representation::
@@ -686,17 +619,6 @@ def make_ordinal(n):
     if 11 <= (n % 100) <= 13:
         suffix = 'th'
     return f'{n}{suffix}'
-
-def get_emoji(user_id, amount, title):
-    today = datetime.today()
-    if any(substring in title for substring in JACK_FILTER):
-        return f'<:KimoiHuh:931588710473031761>'
-    elif today.month == 10 and today.day == 3:
-        return '🕓'
-    elif amount == 1:
-        return f'<:ChubbyGero:831348462305673286>'
-    else:
-        return random_emoji()
 
 def emoji(s):
     return f'<:{s}:{EMOJI_TABLE[s]}>'

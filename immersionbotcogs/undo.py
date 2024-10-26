@@ -7,7 +7,7 @@ from typing import Optional
 import json
 from modals.constants import _DB_NAME, TIMEFRAMES, guild_id, _GOAL_DB, _MULTIPLIERS, _IMMERSION_CODES
 from modals.constants import guild_id, _DB_NAME
-from modals.log import Log
+from modals.log_constructor import Log_constructor
 from modals import helpers
 from discord.ui import Select
 
@@ -124,6 +124,7 @@ class Undo(commands.Cog):
             except Exception:
                 return await interaction.response.send_message(content='Enter a valid date. [Year-Month-day] e.g 2023-12-24', ephemeral=True)
             
+        print(beginn, end)
         with Store(_DB_NAME) as store:
             logs = store.get_logs_by_user_with_row_id(interaction.user.id, None, (beginn, end), None)
         if logs == []:
@@ -170,7 +171,7 @@ class Undo(commands.Cog):
                     codes = json.load(file)
             except FileNotFoundError:
                 codes = {}
-            log = Log(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].title, relevant_result[1].note, relevant_result[1].created_at)
+            log = Log_constructor(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].title, relevant_result[1].note, relevant_result[1].created_at)
             with Set_Goal(_GOAL_DB) as store_goal:
                 helpers.undo_goal(goals, log, store_goal, MULTIPLIERS)
             store_goal.close()

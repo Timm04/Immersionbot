@@ -1,25 +1,16 @@
 import discord
 from discord.ext import commands
-from typing import Optional
 from discord import app_commands
 from discord.app_commands import Choice
-from typing import List
-from modals.sql import Store, Set_Goal
-import modals.helpers as helpers
-import logging
-import aiohttp
-import asyncio
-from modals.constants import guild_id, _DB_NAME, _JP_DB, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
-from modals.log_constructor import Log_constructor
+import time
+from typing import Dict, Tuple, List,  Optional
 import json
-from datetime import datetime
 
-#############################################################
-
-log = logging.getLogger(__name__)
-
-#############################################################
-
+from modals.sql import Store, Set_Goal
+from modals.log_constructor import Log_constructor
+from modals.api_requests import vndb_autocomplete, anilist_autocomplete, tmdb_autocomplete
+from modals.constants import guild_id, _DB_NAME, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
+from modals.helpers import check_maintenance, amount_time_conversion, _to_amount, format_message, get_name_of_immersion, media_type_format_grammar, check_achievements, update_goals, get_goal_description, media_type_format, random_emoji, add_suffix_to_date
 
 class Log(commands.Cog):
 
@@ -36,51 +27,44 @@ class Log(commands.Cog):
     @app_commands.describe(amount='''Episodes watched, characters or pages read. Time read/listened in [hr:min:sec], [min:sec], [min] for example '1.30' or '25'.''')
     @app_commands.describe(comment='''Comment''')
     @app_commands.describe(name='''You can use vndb IDs and titles for VN and Anilist codes for Anime and Manga''')
-    @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="Manga"), Choice(name="Anime", value="Anime"), Choice(name="Book", value="Book"), Choice(name="Readtime", value="Readtime"), Choice(name="Listening", value="Listening"), Choice(name="Reading", value="Reading")])
+    @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="MANGA"), Choice(name="Anime", value="ANIME"), Choice(name="Book", value="BOOK"), Choice(name="Readtime", value="READTIME"), Choice(name="Listening", value="LISTENING"), Choice(name="Reading", value="READING")])
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str]):
+        
         # only allowed to log in #bot-debug, #immersion-logs, DMs
         # DMs not working
         channel = interaction.channel
         if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private and channel.id != 947813835715256393:
             return await interaction.response.send_message(ephemeral=True, content='You can only log in #immersion-log or DMs.')
         
-        bool, msg = helpers.check_maintenance()
+        bool, info = check_maintenance()
         if bool:
-            return await interaction.response.send_message(content=f'In maintenance: {msg.maintenance_msg}', ephemeral=True)
+            return await interaction.response.send_message(content=f'In maintenance: {info.maintenance_msg}', ephemeral=True)
         
-        amount = helpers.amount_time_conversion(media_type, amount)
+        amount = amount_time_conversion(media_type, amount)
         if not amount.bool:
             return await interaction.response.send_message(ephemeral=True, content='Enter a valid number.')
         
         # introducing upperbound for amount to log for each media_type
-        if not amount.value > 0:
-            return await interaction.response.send_message(ephemeral=True, content='Only positive numbers allowed.')
-
-        if media_type == "VN" and amount.value > 2000000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 2 million allowed.')
+        def is_valid_amount(media_type, amount):
+            limits = {
+                "VN": 2000000,
+                "Manga": 3000,
+                "Anime": 200,
+                "Book": 500,
+                "Readtime": 400,
+                "Listening": 1000,
+                "Reading": 2000000,
+            }
+            if not (0 < amount <= limits.get(media_type, float('inf'))):
+                return False, f"Only numbers under {limits[media_type]} allowed."
+            if amount in [float('inf'), float('-inf')]:
+                return False, "No infinities allowed."
+            return True, None
         
-        if media_type == "Manga" and amount.value > 3000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 3000 allowed.')
-        
-        if media_type == "Anime" and amount.value > 200:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 200 allowed.')
-        
-        if media_type == "Book" and amount.value > 500:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 500 allowed.')
+        is_valid_amount, erorr_message = is_valid_amount(media_type, amount.value)
+        if not is_valid_amount:
+            return await interaction.response.send_message(ephemeral=True, content=erorr_message)
 
-        if media_type == "Readtime" and amount.value > 400:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 400 allowed.')
-
-        if media_type == "Listening" and amount.value > 1000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 1000 allowed.')
-
-        if media_type == "Reading" and amount.value > 2000000:
-            return await interaction.response.send_message(ephemeral=True, content='Only numbers under 2 million allowed.')
-        
-        if amount.value in [float('inf'), float('-inf')]:
-            return await interaction.response.send_message(ephemeral=True, content='No infinities allowed.')
-
-        #max comment/name length
         if name:
             if len(name) > 150:
                 return await interaction.response.send_message(ephemeral=True, content='Only names under 150 characters allowed.')
@@ -107,64 +91,67 @@ class Log(commands.Cog):
                 codes = json.load(file)
         except FileNotFoundError:
             codes = {}
-        calc_amount, format, msg, immersion_title = helpers.point_message_converter(media_type.upper(), amount.value, name, MULTIPLIERS, codes, codes_path)
-        print(first_date, date)
+
+        weighed_amount = _to_amount(media_type, amount.value, MULTIPLIERS)
+        point_conversion = format_message(media_type, weighed_amount, MULTIPLIERS)
+        immersion_title = get_name_of_immersion(media_type, name, codes, codes_path)
+        media_suffix = media_type_format_grammar(media_type, amount.value)
         
         monthy_points_before_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
-        old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
+        old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
 
         self.conn.new_log(guild_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
         
-        current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = helpers.check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
+        current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = check_achievements(interaction.user.id, media_type.upper(), self.conn, MULTIPLIERS)
         monthly_points_after_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
 
         if goals:
             log = Log_constructor(interaction.user.id, media_type, amount.value, name, comment, interaction.created_at)
-            goal_message = helpers.update_goals(interaction, goals, log, self.goal, media_type, MULTIPLIERS, codes, codes_path)
+            goal_message = update_goals(interaction, goals, log, self.goal, media_type, MULTIPLIERS, codes, codes_path)
             goals = self.goal.get_goals(interaction.user.id)
     
-            goals_description = helpers.get_goal_description(goals, codes_path, codes)
+            goals_description = get_goal_description(goals, codes_path, codes)
             
         else:
             goals_description = []
             goal_message = []
+
+        streak = self.conn.get_log_streak(interaction.user.id)[0].current_streak
         
-        def emoji():
-            emoji = helpers.get_emoji(media_type.upper(), amount.value, immersion_title[0])
-            if emoji == None:
-                emoji = ""
+        def create_log_embed():
+            embed = discord.Embed(
+                title=f'''Logged {round(amount.value,2)} {media_suffix} of {immersion_title[1]} {random_emoji()}''',
+                description=f'{immersion_title[0]}\n\n{point_conversion}\n{date.strftime("%B")}: ~~{monthy_points_before_log}~~ → {monthly_points_after_log}',
+                color=discord.Colour.random())
             
-            return emoji
-
-        def add_suffix_to_date(date):
-            day = date.day
-            suffix = 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
-            return f"{date.strftime('%b')} {day}{suffix} {date.strftime('%Y')}"
-
-        def created_embed():
-            embed = discord.Embed(title=f'''Logged {round(amount.value,2)} {format} of {immersion_title[1]} {emoji()}''', description=f'{immersion_title[0]}\n\n{msg}\n{date.strftime("%B")}: ~~{monthy_points_before_log}~~ → {monthly_points_after_log}', color=discord.Colour.random())
-            embed.add_field(name='Streak', value=f'current streak: **{self.conn.get_log_streak(interaction.user.id)[0].current_streak} days**')
+            embed.add_field(name='Streak', value=f'current streak: **{streak} days**')
+            
             if new_next_rank_name != "Master" and old_next_achievement == new_rank_achievement:
-                embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(round(new_rank_achievement-current_achievemnt_points, 2)) + " " + helpers.media_type_format(media_type.upper()))
+                embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(round(new_rank_achievement-current_achievemnt_points, 2)) + " " + media_type_format(media_type.upper()))
             elif old_next_achievement != new_rank_achievement:
-                embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(int(new_rank_achievement)) + " " + helpers.media_type_format(media_type.upper()), inline=True)
+                embed.add_field(name='Next Achievement', value=media_type.upper() + " " + new_next_rank_name + " " + new_next_rank_emoji + " in " + str(int(new_rank_achievement)) + " " + media_type_format(media_type.upper()), inline=True)
+            
             if goals_description:
                 embed.add_field(name='Goals', value='\n'.join(goals_description), inline=False)
+            
             embed.set_footer(text=f'From {interaction.user.display_name} on {add_suffix_to_date(interaction.created_at)}', icon_url=interaction.user.display_avatar.url)
             if immersion_title[3]:
-                url = immersion_title[3]
-                if url != None:
-                    embed.set_thumbnail(url=url)
+                embed.set_thumbnail(url=immersion_title[3])
+            
             return embed
+
+        embed = create_log_embed()
         
-        await interaction.edit_original_response(embed=created_embed())
+        message = await interaction.edit_original_response(embed=embed)
+        
         if comment:
-            await interaction.channel.send(content=">>> " + comment)
+            await message.reply(content=">>> " + comment, mention_author=False)
+            
         if old_next_achievement != new_rank_achievement:
-            await interaction.channel.send(content=f'{interaction.user.mention} congrats on unlocking the achievement {media_type.upper()} {new_rank_name} {new_emoji} {str(int(current_rank_achievement))} {helpers.media_type_format(media_type.upper())}!!! {emoji()}')
+            await message.reply(content=f'{interaction.user.mention} congrats on unlocking the achievement {media_type.upper()} {new_rank_name} {new_emoji} {str(int(current_rank_achievement))} {media_type_format(media_type.upper())}!!! {random_emoji()}')
 
         if goal_message != [] and goals:
-            await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {emoji()}')
+            await interaction.channel.send(content=f'{goal_message[0][0]} congrats on finishing your goal of {goal_message[0][1]} {goal_message[0][2]} {goal_message[0][3]} {goal_message[0][4]}, keep the spirit!!! {goal_message[0][5]} {random_emoji()}')
         
         if self.conn.check_if_in_memory():
             self.conn.close()
@@ -173,93 +160,39 @@ class Log(commands.Cog):
     @log.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
 
-        await interaction.response.defer()
+        cache: Dict[str, Tuple[List[app_commands.Choice], float]] = {}
+        CACHE_EXPIRY_TIME = 10 * 60
+
+        def get_cached_results(query: str):
+            if query in cache:
+                cached_data, timestamp = cache[query]
+                if time.time() - timestamp < CACHE_EXPIRY_TIME:
+                    return cached_data
+                else:
+                    del cache[query]
+            return None
+
+        def update_cache(query: str, data: List[app_commands.Choice]):
+            cache[query] = (data, time.time())
+
+        cached_result = get_cached_results(current)
+        if cached_result:
+            return cached_result
+
         media_type = interaction.namespace['media_type']
         suggestions = []
-        url = ''
 
         if media_type == 'VN' or media_type == "READTIME":
-            url = 'https://api.vndb.org/kana/vn'
-            data = {'filters': ['search', '=', f'{current}'], 'fields': 'title, alttitle'} # default no. of results is 10
+            suggestions = await vndb_autocomplete(current)
         
-        elif media_type == 'Anime' or media_type == 'Manga':
-            url = 'https://graphql.anilist.co'
-            query = f'''
-            query ($page: Int, $perPage: Int, $title: String) {{
-                Page(page: $page, perPage: $perPage) {{
-                    pageInfo {{
-                        total
-                        perPage
-                    }}
-                    media (search: $title, type: {media_type.upper()}) {{
-                        id
-                        title {{
-                            romaji
-                            native
-                        }}
-                    }}
-                }}
-            }}
-            '''
+        elif media_type == 'ANIME' or media_type == 'MANGA':
+            suggestions = await anilist_autocomplete(current, media_type)
 
-            variables = {
-                'title': current,
-                'page': 1,
-                'perPage': 10
-            }
+        elif media_type == 'LISTENING':
+            suggestions = await tmdb_autocomplete(current, TMDB_API_KEY)
 
-            data = {'query': query, 'variables': variables}
-
-        elif media_type == 'Listening':
-            IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original"
-            API_KEY = TMDB_API_KEY
-            query = current
-            url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
-
-            # Define the parameters for the request
-            params = {
-                "api_key": API_KEY,
-                "query": query
-            }
-
-        if not url:
-            return []
-
-        async with aiohttp.ClientSession() as session:
-            if media_type == 'Listening':
-                async with session.get(url, params=params) as resp:
-                    log.info(f"Status: {resp.status}")
-                    json_data = await resp.json()
-
-                    if 'results' in json_data:
-                        suggestions = [
-                            (result.get('name') or result.get('title'), result.get('original_title'), result.get('original_language'), result['id'], result['media_type'], result.get('poster_path'))
-                            for result in json_data['results']
-                        ]
-                    
-                    await asyncio.sleep(0)
-                    
-                    return [
-                        app_commands.Choice(name=f'{org_lan}: {title} ({org_title}) ({media_type})', value=str([id, media_type, f'{poster}']))
-                        for title, org_title, org_lan, id, media_type, poster in suggestions if query.lower() in title.lower()
-                    ]
-            else:
-                async with session.post(url, json=data) as resp:
-                    log.info(resp.status)
-                    json_data = await resp.json()
-
-                    if media_type == 'VN' or media_type == "READTIME":
-                        suggestions = [(result['title'], result['id']) for result in json_data['results']]
-
-                    elif media_type == 'Anime' or media_type == 'Manga':
-                        suggestions = [(f"{result['title']['romaji']} ({result['title']['native']})", result['id']) for result in json_data['data']['Page']['media']]
-
-                    await asyncio.sleep(0)
-
-                    return [
-                        app_commands.Choice(name=title, value=str(id))
-                        for title, org_title, org_lan, id in suggestions if current.lower() in title.lower()
-                    ]
+        update_cache(current, suggestions)
+        return suggestions
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Log(bot))
