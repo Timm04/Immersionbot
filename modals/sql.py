@@ -268,7 +268,7 @@ class Store:
         ORDER BY created_at DESC;
         """
         
-        return self.fetch(query)
+        return self.fetch(query, params)
     
     def get_logs_by_user(self, discord_user_id, media_type, timeframe, name):
         #refractor later
