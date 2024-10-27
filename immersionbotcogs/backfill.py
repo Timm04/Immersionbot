@@ -47,12 +47,12 @@ class Backfill(commands.Cog):
         def is_valid_amount(media_type, amount):
             limits = {
                 "VN": 2000000,
-                "Manga": 3000,
-                "Anime": 200,
-                "Book": 500,
-                "Readtime": 400,
-                "Listening": 1000,
-                "Reading": 2000000,
+                "MANGA": 3000,
+                "ANIME": 200,
+                "BOOK": 500,
+                "READTIME": 400,
+                "LISTENING": 1000,
+                "READING": 2000000,
             }
             if not (0 < amount <= limits.get(media_type, float('inf'))):
                 return False, f"Only numbers under {limits[media_type]} allowed."
@@ -104,16 +104,16 @@ class Backfill(commands.Cog):
             immersion_title = get_name_of_immersion(media_type, name, codes, codes_path)
             media_suffix = media_type_format_grammar(media_type, amount.value)
             
-            monthy_points_before_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
+            monthy_points_before_log = store.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
             old_rank_achievement, old_achievemnt_points, old_next_achievement, old_emoji, old_rank_name, old_next_rank_emoji, old_next_rank_name, id = check_achievements(interaction.user.id, media_type.upper(), store, MULTIPLIERS)
             
             store.new_log(guild_id, interaction.user.id, media_type.upper(), amount.value, name, comment, date)
             
             current_rank_achievement, current_achievemnt_points, new_rank_achievement, new_emoji, new_rank_name, new_next_rank_emoji, new_next_rank_name, id = check_achievements(interaction.user.id, media_type.upper(), store, MULTIPLIERS)
         
-            monthly_points_after_log = self.conn.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
+            monthly_points_after_log = store.total_points_for_user(interaction.user.id, MULTIPLIERS, (first_date, date))
         
-        streak = self.conn.get_log_streak(interaction.user.id)[0].current_streak
+            streak = store.get_log_streak(interaction.user.id)[0].current_streak
 
         def create_log_embed():
             embed = discord.Embed(
