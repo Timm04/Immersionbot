@@ -54,13 +54,13 @@ async def tmdb_autocomplete(query: str, tmdb_api_key: str):
 
             if 'results' in json_data:
                 suggestions = [
-                    (result.get('name') or result.get('title'), result.get('original_title'), result.get('original_language'), result['id'], result['media_type'], result.get('poster_path'))
+                    (result.get('name') or result.get('title'), result.get('original_title'), result.get('original_language'), result['id'], result['media_type'], result.get('poster_path'), result.get('genre_ids'))
                     for result in json_data['results']
                 ]
             
             await asyncio.sleep(0)
             
             return [
-                app_commands.Choice(name=f'{org_lan}: {title} ({org_title}) ({media_type})', value=str([id, media_type, f'{poster}']))
-                for title, org_title, org_lan, id, media_type, poster in suggestions if query.lower() in title.lower()
+                app_commands.Choice(name=f'''{org_lan}: {title} {'(' + org_title + ')' if org_title != None else ''} ({media_type}) {'(ANIME)' if 16 in genre_ids else ''}''', value=str([id, media_type, f'{poster}']))
+                for title, org_title, org_lan, id, media_type, poster, genre_ids in suggestions if query.lower() in title.lower()
             ]
