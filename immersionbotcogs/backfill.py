@@ -12,6 +12,7 @@ from modals.helpers import _to_amount, format_message, get_name_of_immersion, me
 from modals.sql import Store
 from modals.api_requests import vndb_autocomplete, anilist_autocomplete, tmdb_autocomplete
 from modals.constants import guild_id, _DB_NAME, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
+from immersionbotcogs.log import cache, CACHE_EXPIRY_TIME
 
 class Backfill(commands.Cog):
 
@@ -22,7 +23,7 @@ class Backfill(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
 
-    @app_commands.command(name='backfill', description=f'Backfill your immersion')
+    @app_commands.command(name='backfill', description='Backfill your immersion')
     @app_commands.describe(amount='''Episodes watched, characters or pages read. Time read/listened in [hr:min] or [min] for example '1.30' or '25'.''')
     @app_commands.describe(comment='''Comment''')
     @app_commands.describe(date='''[year-month-day] Example: '2023-12-24' ''')
@@ -140,9 +141,6 @@ class Backfill(commands.Cog):
         
     @backfill.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
-
-        cache: Dict[str, Tuple[List[app_commands.Choice], float]] = {}
-        CACHE_EXPIRY_TIME = 10 * 60
 
         def get_cached_results(query: str):
             if query in cache:

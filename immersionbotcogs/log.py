@@ -12,6 +12,9 @@ from modals.api_requests import vndb_autocomplete, anilist_autocomplete, tmdb_au
 from modals.constants import guild_id, _DB_NAME, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, TMDB_API_KEY
 from modals.helpers import check_maintenance, amount_time_conversion, _to_amount, format_message, get_name_of_immersion, media_type_format_grammar, check_achievements, update_goals, get_goal_description, media_type_format, random_emoji, add_suffix_to_date
 
+cache: Dict[str, Tuple[List[app_commands.Choice], float]] = {}
+CACHE_EXPIRY_TIME = 10 * 60
+
 class Log(commands.Cog):
 
     def __init__(self, bot: commands.Bot, db_conn=None, goal_conn=None) -> None:
@@ -160,9 +163,6 @@ class Log(commands.Cog):
     @log.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
 
-        cache: Dict[str, Tuple[List[app_commands.Choice], float]] = {}
-        CACHE_EXPIRY_TIME = 10 * 60
-
         def get_cached_results(query: str):
             if query in cache:
                 cached_data, timestamp = cache[query]
@@ -176,6 +176,7 @@ class Log(commands.Cog):
             cache[query] = (data, time.time())
 
         cached_result = get_cached_results(current)
+        print(cached_result)
         if cached_result:
             return cached_result
 
