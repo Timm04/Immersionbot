@@ -176,7 +176,7 @@ class Log(commands.Cog):
             cache[query] = (data, time.time())
 
         cached_result = get_cached_results(current)
-        print(cached_result)
+
         if cached_result:
             return cached_result
 
