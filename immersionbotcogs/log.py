@@ -33,6 +33,7 @@ class Log(commands.Cog):
     @app_commands.choices(media_type = [Choice(name="Visual Novel", value="VN"), Choice(name="Manga", value="MANGA"), Choice(name="Anime", value="ANIME"), Choice(name="Book", value="BOOK"), Choice(name="Readtime", value="READTIME"), Choice(name="Listening", value="LISTENING"), Choice(name="Reading", value="READING")])
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str]):
         
+        #media_type = media_type.upper()
         # only allowed to log in #bot-debug, #immersion-logs, DMs
         # DMs not working
         channel = interaction.channel
@@ -51,12 +52,12 @@ class Log(commands.Cog):
         def is_valid_amount(media_type, amount):
             limits = {
                 "VN": 2000000,
-                "Manga": 3000,
-                "Anime": 200,
-                "Book": 500,
-                "Readtime": 400,
-                "Listening": 1000,
-                "Reading": 2000000,
+                "MANGA": 3000,
+                "ANIME": 200,
+                "BOOK": 500,
+                "READTIME": 400,
+                "LISTENING": 1000,
+                "READING": 2000000,
             }
             if not (0 < amount <= limits.get(media_type, float('inf'))):
                 return False, f"Only numbers under {limits[media_type]} allowed."

@@ -14,6 +14,7 @@ from modals.log_constructor import Log_constructor
 from modals.sql import MediaType, Set_Goal, Store
 from modals.constants import guild_id, _GOAL_DB, _IMMERSION_CODES, _MULTIPLIERS, _DB_NAME, TMDB_API_KEY
 from modals.api_requests import vndb_autocomplete, anilist_autocomplete, tmdb_autocomplete
+from immersionbotcogs.log import cache, CACHE_EXPIRY_TIME
 
 class Set_Goal_Media(commands.Cog):
 
@@ -45,12 +46,12 @@ class Set_Goal_Media(commands.Cog):
         def is_valid_amount(media_type, amount):
             limits = {
                 "VN": 4000000,
-                "Manga": 10000,
-                "Anime": 20000,
-                "Book": 10000,
-                "Readtime": 40000,
-                "Listening": 40000,
-                "Reading": 4000000,
+                "MANGA": 10000,
+                "ANIME": 20000,
+                "BOOK": 10000,
+                "READTIME": 40000,
+                "LISTENING": 40000,
+                "READING": 4000000,
             }
             if not (0 < amount <= limits.get(media_type, float('inf'))):
                 return False, f"Only numbers under {limits[media_type]} allowed."
@@ -153,9 +154,6 @@ class Set_Goal_Media(commands.Cog):
     
     @set_goal_media.autocomplete('name')
     async def log_autocomplete(self, interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
-
-        cache: Dict[str, Tuple[List[app_commands.Choice], float]] = {}
-        CACHE_EXPIRY_TIME = 10 * 60
 
         def get_cached_results(query: str):
             if query in cache:
