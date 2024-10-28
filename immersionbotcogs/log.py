@@ -55,8 +55,8 @@ class Log(commands.Cog):
                 "MANGA": 3000,
                 "ANIME": 200,
                 "BOOK": 500,
-                "READTIME": 400,
-                "LISTENING": 1000,
+                "READTIME": 1440,
+                "LISTENING": 1440,
                 "READING": 2000000,
             }
             if not (0 < amount <= limits.get(media_type, float('inf'))):
