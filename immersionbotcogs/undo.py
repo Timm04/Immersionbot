@@ -5,9 +5,9 @@ from datetime import timedelta
 from modals.sql import Store, Set_Goal
 from typing import Optional
 import json
-from modals.constants import _DB_NAME, TIMEFRAMES, tmw_id, _GOAL_DB, _MULTIPLIERS, _IMMERSION_CODES
-from modals.constants import tmw_id, _DB_NAME
-from modals.log import Log
+from modals.constants import _DB_NAME, TIMEFRAMES, guild_id, _GOAL_DB, _MULTIPLIERS, _IMMERSION_CODES
+from modals.constants import guild_id, _DB_NAME
+from modals.log_constructor import Log_constructor
 from modals import helpers
 from discord.ui import Select
 
@@ -75,13 +75,13 @@ class Undo(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
                 
     @app_commands.command(name='undo_log', description=f'Undo your latest immersion log.')
     @app_commands.describe(timeframe='''DEFAULT=MONTH; Week, Month, Year, All, [year-month-day] or [year-month-day-year-month-day]''')
     async def undo_log(self, interaction: discord.Interaction, timeframe: Optional[str]):
         
-        interaction.channel
+        channel = interaction.channel
         # if channel.id != 1010323632750350437 and channel.id != 814947177608118273 and channel.type != discord.ChannelType.private:
         #     return await interaction.response.send_message(content='You can only log in #immersion-log or DMs.', ephemeral=True)
         
@@ -124,6 +124,7 @@ class Undo(commands.Cog):
             except Exception:
                 return await interaction.response.send_message(content='Enter a valid date. [Year-Month-day] e.g 2023-12-24', ephemeral=True)
             
+        print(beginn, end)
         with Store(_DB_NAME) as store:
             logs = store.get_logs_by_user_with_row_id(interaction.user.id, None, (beginn, end), None)
         if logs == []:
@@ -167,10 +168,10 @@ class Undo(commands.Cog):
             codes_path = _IMMERSION_CODES
             try:
                 with open(codes_path, "r") as file:
-                    json.load(file)
+                    codes = json.load(file)
             except FileNotFoundError:
-                pass
-            log = Log(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].title, relevant_result[1].note, relevant_result[1].created_at)
+                codes = {}
+            log = Log_constructor(interaction.user.id, relevant_result[1].media_type.value, relevant_result[1].amount, relevant_result[1].title, relevant_result[1].note, relevant_result[1].created_at)
             with Set_Goal(_GOAL_DB) as store_goal:
                 helpers.undo_goal(goals, log, store_goal, MULTIPLIERS)
             store_goal.close()

@@ -5,7 +5,7 @@ import asyncio
 import os
 import modals.help_text as help_text
 import datetime, time
-from modals.constants import tmw_id, _MULTIPLIERS, _JP_DB
+from modals.constants import guild_id, _MULTIPLIERS, _JP_DB
 from discord.app_commands import Choice
 import json
 from modals.sql import Set_jp
@@ -21,7 +21,7 @@ class BotManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
 
     @app_commands.command(name="uptime", description="How long the bot is working.")
     async def uptime(self, interaction: discord.Interaction):
@@ -52,7 +52,7 @@ class BotManager(commands.Cog):
     @app_commands.checks.has_role("Moderator")
     async def sync(self, interaction: discord.Interaction):
         await self.bot.tree.sync()
-        await interaction.response.send_message(f'Synced commands to guild with id {tmw_id}.')
+        await interaction.response.send_message(f'Synced commands to guild with id {guild_id}.')
         
     @app_commands.command(name="maintenance", description="Disables command usage for debugging.")
     @app_commands.checks.has_role("Moderator")

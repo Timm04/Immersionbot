@@ -5,6 +5,7 @@ import sys
 import traceback
 import logging
 from immersionbotcogs.cogs_manager import start_time
+from modals.constants import TOKEN
 
 import time
 
@@ -19,7 +20,6 @@ class CustomCommandTree(discord.app_commands.CommandTree):
         error_type, value, tb = sys.exc_info()
         traceback_string = '\n'.join(traceback.format_list(traceback.extract_tb(tb)))
         error_string = f"```{str(value)}\n\n{traceback_string}```"
-        #await interaction.channel.send(content='<@250351201923629058>')
         await self.bot.bot_owner_dm_channel.send(error_string)
 
         if isinstance(error, discord.app_commands.errors.MissingRole):
@@ -69,4 +69,4 @@ class MyBot(commands.Bot):
         print(f"Running pycord version: {discord.__version__}")
 
 bot = MyBot()
-bot.run("enter token here")
+bot.run(f'{TOKEN}')

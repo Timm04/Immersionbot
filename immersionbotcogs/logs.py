@@ -9,7 +9,7 @@ from modals.sql import Store
 import modals.helpers as helpers
 import aiohttp
 import asyncio
-from modals.constants import TIMEFRAMES, tmw_id, _DB_NAME, _IMMERSION_CODES, _MULTIPLIERS
+from modals.constants import TIMEFRAMES, guild_id, _DB_NAME, _IMMERSION_CODES, _MULTIPLIERS
 import logging
 import json
 
@@ -22,7 +22,7 @@ class Logs_Display(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(tmw_id)
+        self.myguild = self.bot.get_guild(guild_id)
 
     @app_commands.command(name='logs', description=f'View your logs')
     @app_commands.describe(name='''You can use vndb IDs and titles for VN and Anilist codes for Anime and Manga''')

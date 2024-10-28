@@ -1,3 +1,10 @@
+import os
+
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+guild_id = os.getenv("SERVER_ID")
+TOKEN = os.getenv("TOKEN")
+ALLOWED_CHANNELS = [796876740445208606] # Channel IDs where certain features like logging are allowed
+
 _DB_NAME = 'prod.db'
 _JP_DB = "dbs/japanese.db"
 _GOAL_DB = "dbs/goals.db"
@@ -62,8 +69,6 @@ EMOJI_TABLE = {
     "KimoiHuh": 931588710473031761,
 }
 
-ALLOWED_CHANNELS= [796876740445208606]
-tmw_id = 947813835715256390
 TIMEFRAMES = ["WEEK, MONTH, YEAR, All"]
 
 JACK_FILTER = ["imouto", "sister", "いもうと", "妹", "sis", "sisters", "お兄ちゃん", "兄", "ブラコン", "きょうだい"]
@@ -93,4 +98,14 @@ timezones = {
     "Europe/Istanbul": 3,  # Turkey Time (TRT)
     "Asia/Bangkok": 7,  # Indochina Time (ICT)
     "Africa/Johannesburg": 2,  # South Africa Standard Time (SAST)
+}
+
+MESSAGE_FORMATS = {
+    "VN": "{conversion} points/characters → +{points} points",
+    "MANGA": "{conversion} points per page → +{points} points",
+    "BOOK": "{conversion} point per page → +{points} points",
+    "ANIME": "{conversion} points per eps → +{points} points",
+    "READING": "{conversion} points/character of reading → +{points} points",
+    "READTIME": "{conversion} points/min of readtime → +{points} points",
+    "LISTENING": "{conversion} points/min of listening → +{points} points"
 }

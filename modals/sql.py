@@ -1,13 +1,16 @@
 import sqlite3
 from collections import namedtuple
 from enum import Enum
-from modals.maintenance import Maintenance as m
-
 
 class SqliteEnum(Enum):
     def __conform__(self, protocol):
         if protocol is sqlite3.PrepareProtocol:
             return self.name
+        
+class Maintenance():
+    def __init__(self, bool, msg) -> None:
+        self.bool = bool
+        self.maintenance_msg = msg
 
 class MediaType(SqliteEnum):
     BOOK = 'BOOK'
@@ -116,13 +119,30 @@ class Debug:
         else:
             message = ""
         cursor.close()
-        return m(bool, message)
+        
+        return Maintenance(bool, message)
 
 class Store:
-    def __init__(self, db_name):
-        self.conn = sqlite3.connect(
-            db_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    def __init__(self, db_name_or_conn):
+        # Check if the input is a string (file path) or an existing connection object
+        if isinstance(db_name_or_conn, str):
+            # Open a new connection if a file path is provided
+            self.conn = sqlite3.connect(
+                db_name_or_conn, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+        else:
+            # Use the provided connection object if not a string
+            self.conn = db_name_or_conn
+            
         self.conn.row_factory = namedtuple_factory
+        
+    def check_if_in_memory(self):
+        querry = "PRAGMA database_list;"
+        databases = self.fetch(querry)
+
+        if databases and databases[0][2] == ':memory:':
+            return True
+        else:
+            return False
         
     def __enter__(self):
         return self
@@ -133,19 +153,25 @@ class Store:
     def close(self):
         self.conn.close()
 
-    def fetch(self, query):
-        # print(query)
+    def fetch(self, query, params=None):
         cursor = self.conn.cursor()
-        cursor.execute(query)
-        result = cursor.fetchall()
-        cursor.close()
+        try:
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            result = cursor.fetchall()
+        except Exception as e:
+            result = []
+        finally:
+            cursor.close()
         return result
 
     def new_log(
         self, discord_guild_id, discord_user_id, media_type, amount, title, note, created_at
     ):
         with self.conn:
-            self.conn.execute("INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, title, note, created_at)VALUES (?,?,?,?,?,?,?)", (int(discord_guild_id), int(discord_user_id), str(media_type), int(amount), str(title), str(note), created_at))
+            self.conn.execute("INSERT INTO logs (discord_guild_id, discord_user_id, media_type, amount, title, note, created_at) VALUES (?,?,?,?,?,?,?)", (int(discord_guild_id), int(discord_user_id), str(media_type), int(amount), str(title), str(note), created_at))
             self.conn.commit()
             
     def current_points(self, discord_guild_id, discord_user_id, created_at):
@@ -155,8 +181,30 @@ class Store:
             WHERE discord_guild_id={discord_user_id} AND created_at BETWEEN '{created_at[0]}' AND '{created_at[1]}'
             """
         
-            return self.fetch(query)
+            result = self.fetch(query)
+            print(result)
         
+    def total_points_for_user(self, discord_user_id, MULTIPLIERS, timeframe):
+        with self.conn:
+            query = f"""
+            SELECT SUM(
+                CASE
+                    WHEN media_type = 'BOOK' THEN amount * {MULTIPLIERS['BOOK']}
+                    WHEN media_type = 'MANGA' THEN amount * {MULTIPLIERS['MANGA']}
+                    WHEN media_type = 'VN' THEN amount * {MULTIPLIERS['VN']}
+                    WHEN media_type = 'ANIME' THEN amount * {MULTIPLIERS['ANIME']}
+                    WHEN media_type = 'READING' THEN amount * {MULTIPLIERS['READING']}
+                    WHEN media_type = 'READTIME' THEN amount * {MULTIPLIERS['READTIME']}
+                    WHEN media_type = 'LISTENING' THEN amount * {MULTIPLIERS['LISTENING']}
+                END
+            ) AS total
+            FROM logs
+            WHERE discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'
+            """
+            result = self.fetch(query)[0].total
+
+            return 0 if result == None else round(result, 4)
+                
     def get_leaderboard(self, discord_user_id, timeframe, media_type, MULTIPLIERS):
         with self.conn:
             print(len(timeframe))
@@ -203,29 +251,20 @@ class Store:
             return self.fetch(query)
     
     def get_logs_by_user_with_row_id(self, discord_user_id, media_type, timeframe, name):
-        #refractor later
-        if media_type == None and timeframe == None and name == None:
-            where_clause = f"discord_user_id={discord_user_id}"
-        if media_type and media_type != None and timeframe  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif not media_type and media_type != None and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe == None  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
+        where_clause = f"discord_user_id = ?"
+        params = [discord_user_id]
+
+        if media_type:
+            where_clause += " AND media_type = ?"
+            params.append(media_type.upper())
+
+        if timeframe:
+            where_clause += " AND created_at BETWEEN ? AND ?"
+            params.extend(timeframe)
+            
+        if name:
+            where_clause += " AND title = ?"
+            params.append(name)
             
         query = f"""
         SELECT rowid, * FROM logs
@@ -233,32 +272,24 @@ class Store:
         ORDER BY created_at DESC;
         """
         
-        return self.fetch(query)
+        return self.fetch(query, params)
     
     def get_logs_by_user(self, discord_user_id, media_type, timeframe, name):
         #refractor later
-        if media_type == None and timeframe == None and name == None:
-            where_clause = f"discord_user_id={discord_user_id}"
-        if media_type and media_type != None and timeframe  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif not media_type and media_type != None and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe == None  and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type == None and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name == None:
-            where_clause = f"discord_user_id={discord_user_id} AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif media_type and timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND media_type='{media_type.upper()}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe and name:
-            title = name
-            where_clause = f"discord_user_id={discord_user_id} AND title='{title}' AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
-        elif timeframe:
-            where_clause = f"discord_user_id={discord_user_id} AND created_at BETWEEN '{timeframe[0]}' AND '{timeframe[1]}'"""
+        where_clause = f"discord_user_id = ?"
+        params = [discord_user_id]
+
+        if media_type:
+            where_clause += " AND media_type = ?"
+            params.append(media_type.upper())
+
+        if timeframe:
+            where_clause += " AND created_at BETWEEN ? AND ?"
+            params.extend(timeframe)
+            
+        if name:
+            where_clause += " AND title = ?"
+            params.append(name)
             
         query = f"""
         SELECT * FROM logs
@@ -266,7 +297,7 @@ class Store:
         ORDER BY created_at DESC;
         """
         
-        return self.fetch(query)
+        return self.fetch(query, params)
     
     def get_that_log(self, discord_user_id):
         where_clause = f'''discord_user_id={discord_user_id}'''
@@ -475,8 +506,8 @@ class Set_Goal:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
 
-    def close(self):
-        self.conn.close()
+    def __enter__(self):
+        return self
 
     def fetch(self, query):
         # print(query)
@@ -505,8 +536,6 @@ class Set_Goal:
         """
         
         return self.fetch(query)
-    
-    
             
     def new_point_goal(self, discord_user_id, goal_type, media_type, current_amount, amount, text, span, created_at, end):
         with self.conn:
