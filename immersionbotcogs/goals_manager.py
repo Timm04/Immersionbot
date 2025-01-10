@@ -94,23 +94,14 @@ class Goals_manager(commands.Cog):
         if not goals:
             return await interaction.response.send_message(ephemeral=True, content='No goals found. Set goals with ``/set_goal``.')
 
-        goals_description = []
         codes_path = _IMMERSION_CODES
         try:
             with open(codes_path, "r") as file:
                 codes = json.load(file)
         except FileNotFoundError:
             codes = {}
-        for goal_row in goals:
-            try:
-                updated_date = f'<t:{int(datetime.strptime(goal_row.end, "%Y-%m-%d %H:%M:%S.%f%z").timestamp())}:R>'
-            except Exception:
-                updated_date = goal_row.end
-            goal_title = helpers.get_name_of_immersion(goal_row.media_type.value, goal_row.text, codes, codes_path)
-            if goal_row.current_amount < goal_row.amount:
-                    goals_description.append(f"""- {goal_row.current_amount}/{goal_row.amount} {helpers.media_type_format(goal_row.media_type.value) if goal_row.goal_type != "POINTS" else "points"} of [{goal_title[1]}]({goal_title[2]}) ({updated_date})""")
-            else:
-                goals_description.append(f"""~~- {goal_row.current_amount}/{goal_row.amount} {helpers.media_type_format(goal_row.media_type.value) if goal_row.goal_type != "POINTS" else "points"} of [{goal_title[1]}]({goal_title[2]}) ({updated_date})~~""")
+        
+        goals_description = helpers.get_goal_description(goals, codes_path, codes)
 
         results = []
         for i, goal in enumerate(zip(goals_description, goals)):
