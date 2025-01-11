@@ -514,8 +514,26 @@ class TestLogCommand:
         assert self.interaction.edit_original_response.call_count == 1
         embed = self.interaction.edit_original_response.call_args[1]['embed']
         goal_field = next(field for field in embed.fields if field.name == 'Goals')
-        assert goal_field.value.startswith(f'- 0/10 mins of [LISTENING](https://anilist.co/home)')
+        assert ('0/10 mins of [LISTENING](https://anilist.co/home)' in goal_field.value)
+
+    @pytest.mark.asyncio
+    async def test_log_with_multiple_goal_display(self, setup):
+        #Tests if multiple goals are displayed correctly (without extra empty lines)
+        #on the log for a goal
+        #note: will pass even though Discord renders the embed with an empty line
+        cog, store = await setup
+        media_type = "ANIME"
         
+        # Execute the log command multiple times
+        await self.goal_media.set_goal_media.callback(self.goal_media, self.interaction, media_type='LISTENING', amount='10', name=None, span='DAY')
+        await self.goal_media.set_goal_media.callback(self.goal_media, self.interaction, media_type='ANIME', amount='2', name=None, span='DAY')
+        await cog.log.callback(cog, self.interaction, media_type='ANIME', amount='1', name=None, comment=None)
+        
+        assert self.interaction.edit_original_response.call_count == 1
+        embed = self.interaction.edit_original_response.call_args[1]['embed']
+        goal_field = next(field for field in embed.fields if field.name == 'Goals')
+        assert len(goal_field.value.split('\n')) == 2
+
     @pytest.mark.asyncio
     async def test_log_with_updating_goal_display(self, setup):
         #Tests if the goal is displayed correctly on the log for an related goal
@@ -529,4 +547,4 @@ class TestLogCommand:
         assert self.interaction.edit_original_response.call_count == 1
         embed = self.interaction.edit_original_response.call_args[1]['embed']
         goal_field = next(field for field in embed.fields if field.name == 'Goals')
-        assert goal_field.value.startswith(f'- 1/10 eps of [ANIME](https://anilist.co/home)')
+        assert ('1/10 eps of [ANIME](https://anilist.co/home)' in goal_field.value)

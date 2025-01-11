@@ -11,7 +11,7 @@ import tmdbsimple as tmdb
 import random
 import tmdbv3api
 import requests
-from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, ACHIEVEMENT_EMOJIS, ACHIEVEMENT_IDS, EMOJI_TABLE, JACK_FILTER, TMDB_API_KEY
+from modals.constants import ACHIEVEMENTS, PT_ACHIEVEMENTS, ACHIEVEMENT_RANKS, ACHIEVEMENT_EMOJIS, ACHIEVEMENT_IDS, GOAL_STATUS, EMOJI_TABLE, JACK_FILTER, TMDB_API_KEY
 import asyncio
 from modals.goal import Goal
 from modals.constants import MESSAGE_FORMATS
@@ -232,10 +232,13 @@ def get_goal_description(goals, codes_path, codes):
         except Exception:
             updated_date = goal_row.end
         goal_title = get_name_of_immersion(goal_row.media_type.value, goal_row.text, codes, codes_path)
-        if goal_row.current_amount < goal_row.amount:
-                goals_description.append(f"""- {round(goal_row.current_amount, 2)}/{goal_row.amount} {media_type_format(goal_row.media_type.value) if goal_row.goal_type != "POINTS" else "points"} of [{goal_title[1]}]({goal_title[2]}) ({updated_date})""")
+        goal_details = f"""{round(goal_row.current_amount, 2)}/{goal_row.amount} {media_type_format(goal_row.media_type.value) if goal_row.goal_type != "POINTS" else "points"} of [{goal_title[1]}]({goal_title[2]}) ({updated_date})"""
+        if goal_row.current_amount == 0:
+            goals_description.append(f"{GOAL_STATUS['NO_PROGRESS']} {goal_details}")
+        elif goal_row.current_amount < goal_row.amount:
+            goals_description.append(f"{GOAL_STATUS['PROGRESS']} {goal_details}")
         else:
-            goals_description.append(f"""~~- {round(goal_row.current_amount, 2)}/{goal_row.amount} {media_type_format(goal_row.media_type.value) if goal_row.goal_type != "POINTS" else "points"} of [{goal_title[1]}]({goal_title[2]}) ({updated_date})~~""")
+            goals_description.append(f"{GOAL_STATUS['DONE']} ~~{goal_details}~~")
 
     return goals_description
 

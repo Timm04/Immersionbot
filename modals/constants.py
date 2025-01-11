@@ -27,6 +27,12 @@ ACHIEVEMENT_RANKS = ['Beginner', 'Initiate', 'Apprentice', 'Hobbyist', 'Enthusia
 ACHIEVEMENT_EMOJIS = [':new_moon:', ':new_moon_with_face:', ':waning_crescent_moon:', ':last_quarter_moon:', ':waning_gibbous_moon:', ':full_moon:', ':full_moon_with_face:', ':sun_with_face:']
 ACHIEVEMENT_IDS = [1120790734476423270, 1120790825702527037, 1120790890038952066, 1120790964970213436, 1120791040463470702, 1120791104518901912, 1120791193366823112, 1120791256818266112]
 
+GOAL_STATUS = {
+    "NO_PROGRESS": "<:gannbare:1097669283615604836>",
+    "PROGRESS": "<:naruhodo:1097669129672073296>",
+    "DONE": "<:NanaYay:837211306293067797>"
+}
+
 EMOJI_TABLE = {
     # 'Yay': 658999234787278848,
     # 'NanaYes': 837211260155854849,
